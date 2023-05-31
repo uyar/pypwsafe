@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#===============================================================================
+# ===============================================================================
 # This file is part of PyPWSafe.
 #
 #    PyPWSafe is free software: you can redistribute it and/or modify
@@ -14,24 +14,27 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-#===============================================================================
-''' Test named and unnamed password policies
+# ===============================================================================
+""" Test named and unnamed password policies
 Created on Jan 19, 2013
 
 @author: Paulson McIntyre (GpMidi) <paul@gpmidi.net>
 @license: GPLv2
 @version: 0.1
-'''
+"""
 import unittest
-import os, os.path, sys
 
-from TestSafeTests import TestSafeTestBase, STANDARD_TEST_SAFE_PASSWORD
+import os
+import os.path
+import sys
+
+from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
 
 
 class RecentEntriesTest_DBLevel(TestSafeTestBase):
     # Should be overridden with a test safe file name. The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above) 
-    testSafe = 'RecentEntriesTest.psafe3'
+    # All test safes must have the standard password (see above)
+    testSafe = "RecentEntriesTest.psafe3"
     # Automatically open safes
     autoOpenSafe = False
     # How to open the safe
@@ -39,11 +42,12 @@ class RecentEntriesTest_DBLevel(TestSafeTestBase):
 
     def _openSafe(self):
         from pypwsafe import PWSafe3
+
         self.testSafeO = PWSafe3(
-                                 filename = self.ourTestSafe,
-                                 password = STANDARD_TEST_SAFE_PASSWORD,
-                                 mode = self.autoOpenMode,
-                                 )
+            filename=self.ourTestSafe,
+            password=STANDARD_TEST_SAFE_PASSWORD,
+            mode=self.autoOpenMode,
+        )
 
     def test_open(self):
         self.testSafeO = None
@@ -53,8 +57,8 @@ class RecentEntriesTest_DBLevel(TestSafeTestBase):
 
 class RecentEntriesTest_RecordLevel(TestSafeTestBase):
     # Should be overridden with a test safe file name. The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above) 
-    testSafe = 'RecentEntriesTest.psafe3'
+    # All test safes must have the standard password (see above)
+    testSafe = "RecentEntriesTest.psafe3"
     # Automatically open safes
     autoOpenSafe = True
     # How to open the safe
@@ -62,10 +66,9 @@ class RecentEntriesTest_RecordLevel(TestSafeTestBase):
 
     def test_entries(self):
         from uuid import UUID
+
         for entry in self.testSafeO.getDbRecentEntries():
             self.assertTrue(type(entry) == UUID, "Expected a UUID")
-    
-    
-    
-# FIXME: Add save test
 
+
+# FIXME: Add save test

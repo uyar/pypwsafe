@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#===============================================================================
+# ===============================================================================
 # This file is part of PyPWSafe.
 #
 #    PyPWSafe is free software: you can redistribute it and/or modify
@@ -14,26 +14,31 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-#===============================================================================
-''' Run unit tests
+# ===============================================================================
+""" Run unit tests
 Created on Jan 19, 2013
 
 @author: Paulson McIntyre (GpMidi) <paul@gpmidi.net>
 @license: GPLv2
 @version: 0.1
-'''
+"""
 import unittest
-import os, os.path, sys
 
 import logging
+import os
+import os.path
+import sys
+
+
 logging.basicConfig(
-                    level = logging.DEBUG,
-                    filename = '/tmp/pypwsafe_unittests.log',
-                    filemode = 'w',
-                    )
+    level=logging.DEBUG,
+    filename="/tmp/pypwsafe_unittests.log",
+    filemode="w",
+)
 
 from PWSv3Headers import *
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.path.append("../src")
     unittest.main()

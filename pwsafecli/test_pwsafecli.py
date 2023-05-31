@@ -1,13 +1,15 @@
 #!/usr/bin/python
 
 import copy
-from mock import Mock
-from nose.tools import assert_equals
 import optparse
 import os
 import sys
 
+from mock import Mock
+from nose.tools import assert_equals
+
 import pwsafecli
+
 
 # available in newer versions
 class AssertRaises(object):
@@ -24,6 +26,7 @@ class AssertRaises(object):
         self.exception = exctype(value)
         return True
 
+
 def test_get_record_attr():
     record = Mock(spec=["getFoo", "getBar"])
     record.getFoo = Mock(return_value="foo")
@@ -37,6 +40,7 @@ def test_get_record_attr():
     with AssertRaises(AttributeError):
         pwsafecli.match_valid(record, **{"waz": object()})
 
+
 def try_collect_record_options_with_attrs(attrs):
     mock = Mock(spec=["group", "title", "username", "UUID"])
     mock.group = None
@@ -49,12 +53,14 @@ def try_collect_record_options_with_attrs(attrs):
     result = pwsafecli.collect_record_options(mock)
     assert_equals(attrs, result)
 
+
 def test_collect_record_options():
     try_collect_record_options_with_attrs({})
-    try_collect_record_options_with_attrs({"group": ['foo']})
-    try_collect_record_options_with_attrs({'title': 'Test Node'})
-    try_collect_record_options_with_attrs({'username': 'bob'})
-    try_collect_record_options_with_attrs({'UUID': '1-1-1-1'})
+    try_collect_record_options_with_attrs({"group": ["foo"]})
+    try_collect_record_options_with_attrs({"title": "Test Node"})
+    try_collect_record_options_with_attrs({"username": "bob"})
+    try_collect_record_options_with_attrs({"UUID": "1-1-1-1"})
+
 
 class TestCommandLine(object):
     def __init__(self):
@@ -70,7 +76,12 @@ class TestCommandLine(object):
 
     def test_no_action(self):
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
-            pwsafecli.parse_commandline(self.parsers, ['unittest',])
+            pwsafecli.parse_commandline(
+                self.parsers,
+                [
+                    "unittest",
+                ],
+            )
 
     def test_no_action_help(self):
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
@@ -82,67 +93,117 @@ class TestCommandLine(object):
 
     def test_unknown_command(self):
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
-            pwsafecli.parse_commandline(self.parsers,
-                                       "unittest unknown".split())
+            pwsafecli.parse_commandline(self.parsers, "unittest unknown".split())
 
     def test_add_no_options(self):
         with AssertRaises(SystemExit) as cm:
-            options = pwsafecli.parse_commandline(self.parsers,
-                                                 "unittest add".split())
+            options = pwsafecli.parse_commandline(self.parsers, "unittest add".split())
 
     def test_add_filename_no_options(self):
-        options = pwsafecli.parse_commandline(self.parsers,
-                                             "unittest add --file foo".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers, "unittest add --file foo".split()
+        )
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
             pwsafecli.add_validator(options)
 
     def test_add_missing_password(self):
-        options = pwsafecli.parse_commandline(self.parsers,
-                                             "unittest add --file foo --title blah --username me --group foo.bar.baz".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers,
+            "unittest add --file foo --title blah --username me --group foo.bar.baz".split(),
+        )
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
             pwsafecli.add_validator(options)
 
     def test_add_expires_option(self):
-        options = pwsafecli.parse_commandline(self.parsers,
-                                             ["unittest", "add", "--file", "foo", "--title", "blah", "--username", "me", "--group", "foo.bar.baz", "--password", "secret", "--expires", "2012-01-01 00:00"])
+        options = pwsafecli.parse_commandline(
+            self.parsers,
+            [
+                "unittest",
+                "add",
+                "--file",
+                "foo",
+                "--title",
+                "blah",
+                "--username",
+                "me",
+                "--group",
+                "foo.bar.baz",
+                "--password",
+                "secret",
+                "--expires",
+                "2012-01-01 00:00",
+            ],
+        )
         pwsafecli.add_validator(options)
 
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
-            options = pwsafecli.parse_commandline(self.parsers,
-                                                 ["unittest", "add", "--file", "foo", "--title", "blah", "--username", "me", "--group", "foo.bar.baz", "--password", "secret", "--expires", "2012-01-01 00:00:00 MDT"])
+            options = pwsafecli.parse_commandline(
+                self.parsers,
+                [
+                    "unittest",
+                    "add",
+                    "--file",
+                    "foo",
+                    "--title",
+                    "blah",
+                    "--username",
+                    "me",
+                    "--group",
+                    "foo.bar.baz",
+                    "--password",
+                    "secret",
+                    "--expires",
+                    "2012-01-01 00:00:00 MDT",
+                ],
+            )
 
     def test_delete_missing_uuid(self):
-        options = pwsafecli.parse_commandline(self.parsers,
-                                             "unittest delete --file foo".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers, "unittest delete --file foo".split()
+        )
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
             pwsafecli.delete_validator(options)
 
     def test_get_missing_options(self):
-        for cmdline in ("unittest get --file foo", "unittest get --file foo --email foo@bar"):
+        for cmdline in (
+            "unittest get --file foo",
+            "unittest get --file foo --email foo@bar",
+        ):
             print(cmdline)
-            options = pwsafecli.parse_commandline(self.parsers,
-                                                 cmdline.split())
+            options = pwsafecli.parse_commandline(self.parsers, cmdline.split())
             with AssertRaises(pwsafecli.PWSafeCLIValidationError):
                 pwsafecli.get_validator(options)
 
     def test_get_display_option(self):
-        options = pwsafecli.parse_commandline(self.parsers, "unittest get --file foo --uuid f2dee5f8-e964-402f-9fe7-78bd2b5cba2e --display username,password".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers,
+            "unittest get --file foo --uuid f2dee5f8-e964-402f-9fe7-78bd2b5cba2e --display username,password".split(),
+        )
         pwsafecli.get_validator(options)
 
-        options = pwsafecli.parse_commandline(self.parsers, "unittest get --file foo --uuid f2dee5f8-e964-402f-9fe7-78bd2b5cba2e --display username,password,uuid".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers,
+            "unittest get --file foo --uuid f2dee5f8-e964-402f-9fe7-78bd2b5cba2e --display username,password,uuid".split(),
+        )
         pwsafecli.get_validator(options)
 
-        options = pwsafecli.parse_commandline(self.parsers, "unittest get --file foo --uuid f2dee5f8-e964-402f-9fe7-78bd2b5cba2e --display username,password,uuid,missing".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers,
+            "unittest get --file foo --uuid f2dee5f8-e964-402f-9fe7-78bd2b5cba2e --display username,password,uuid,missing".split(),
+        )
 
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
             pwsafecli.get_validator(options)
 
     def test_init_options(self):
-        options = pwsafecli.parse_commandline(self.parsers, "unittest init --file foo".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers, "unittest init --file foo".split()
+        )
         pwsafecli.init_validator(options)
 
     def test_update_missing_uuid(self):
-        options = pwsafecli.parse_commandline(self.parsers,
-                                             "unittest update --file foo --username test".split())
+        options = pwsafecli.parse_commandline(
+            self.parsers, "unittest update --file foo --username test".split()
+        )
         with AssertRaises(pwsafecli.PWSafeCLIValidationError) as cm:
             pwsafecli.update_validator(options)

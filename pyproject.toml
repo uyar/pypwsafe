@@ -38,7 +38,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+style = [
+    "flake8",
+    "flake8-isort",
+]
 dev = [
+    "pypwsafe[style]",
     "tox",
     "build",
 ]
@@ -58,12 +63,20 @@ sections = "FUTURE,TEST,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{38,39,310,311}
+envlist = py{38,39,310,311}, style
 isolated_build = True
 
 [testenv]
 commands =
     python tests/runMe.py
+
+[testenv:style]
+skip_install = true
+deps =
+    flake8
+    flake8-isort
+commands =
+    flake8 pypwsafe
 """
 
 [build-system]

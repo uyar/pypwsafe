@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#===============================================================================
+# ===============================================================================
 # This file is part of PyPWSafe.
 #
 #    PyPWSafe is free software: you can redistribute it and/or modify
@@ -14,24 +14,27 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-#===============================================================================
-''' Test the last saving user fields
+# ===============================================================================
+""" Test the last saving user fields
 Created on Jan 19, 2013
 
 @author: Paulson McIntyre (GpMidi) <paul@gpmidi.net>
 @license: GPLv2
 @version: 0.1
-'''
+"""
 import unittest
-import os, os.path, sys
 
-from TestSafeTests import TestSafeTestBase, STANDARD_TEST_SAFE_PASSWORD
+import os
+import os.path
+import sys
+
+from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
 
 
 class LastSaveUserTest_DBLevel(TestSafeTestBase):
     # Should be overridden with a test safe file name. The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above) 
-    testSafe = 'LastSaveUserTest.psafe3'
+    # All test safes must have the standard password (see above)
+    testSafe = "LastSaveUserTest.psafe3"
     # Automatically open safes
     autoOpenSafe = False
     # How to open the safe
@@ -39,11 +42,12 @@ class LastSaveUserTest_DBLevel(TestSafeTestBase):
 
     def _openSafe(self):
         from pypwsafe import PWSafe3
+
         self.testSafeO = PWSafe3(
-                                 filename = self.ourTestSafe,
-                                 password = STANDARD_TEST_SAFE_PASSWORD,
-                                 mode = self.autoOpenMode,
-                                 )
+            filename=self.ourTestSafe,
+            password=STANDARD_TEST_SAFE_PASSWORD,
+            mode=self.autoOpenMode,
+        )
 
     def test_open(self):
         self.testSafeO = None
@@ -53,45 +57,48 @@ class LastSaveUserTest_DBLevel(TestSafeTestBase):
 
 class LastSaveUserTest_RecordLevel(TestSafeTestBase):
     # Should be overridden with a test safe file name. The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above) 
-    testSafe = 'LastSaveUserTest.psafe3'
+    # All test safes must have the standard password (see above)
+    testSafe = "LastSaveUserTest.psafe3"
     # Automatically open safes
     autoOpenSafe = True
     # How to open the safe
     autoOpenMode = "RW"
-    
+
     def test_write(self):
         found = self.testSafeO.getLastSaveUserNew()
         self.assertTrue(found, "Didn't find a new username")
-        
-        username = 'user123'
+
+        username = "user123"
         self.testSafeO.setLastSaveUser(
-                                       username = username,
-                                       updateAutoData = True,
-                                       addOld = True,
-                                       )
+            username=username,
+            updateAutoData=True,
+            addOld=True,
+        )
         found = self.testSafeO.getLastSaveUserNew()
         foundOld = self.testSafeO.getLastSaveUserOld()
         self.assertTrue(found == username, "Saved new user doesn't match what we set")
-        self.assertTrue(foundOld == username, "Saved old user (%r) doesn't match what we set (%r)" % (foundOld, username))
-        
+        self.assertTrue(
+            foundOld == username,
+            "Saved old user (%r) doesn't match what we set (%r)" % (foundOld, username),
+        )
+
     def test_new(self):
         found = self.testSafeO.getLastSaveUserNew()
-        
+
     def test_old(self):
         found = self.testSafeO.getLastSaveUserOld()
         self.assertFalse(found, "Found an old username")
-        
+
     def test_base(self):
         foundN = self.testSafeO.getLastSaveUserNew()
         foundO = self.testSafeO.getLastSaveUserOld()
-        
-        foundFB = self.testSafeO.getLastSaveUser(fallbackOld = True)
-        
-        self.assertTrue(
-                        foundN == foundFB or foundO == foundFB,
-                        "User mismatch",
-                        )
-    
-# FIXME: Add save test
 
+        foundFB = self.testSafeO.getLastSaveUser(fallbackOld=True)
+
+        self.assertTrue(
+            foundN == foundFB or foundO == foundFB,
+            "User mismatch",
+        )
+
+
+# FIXME: Add save test

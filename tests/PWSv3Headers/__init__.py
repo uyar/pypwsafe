@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#===============================================================================
+# ===============================================================================
 # This file is part of PyPWSafe.
 #
 #    PyPWSafe is free software: you can redistribute it and/or modify
@@ -14,17 +14,17 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-#===============================================================================
-'''
+# ===============================================================================
+"""
 Created on Jan 19, 2013
 
 @author: Paulson McIntyre (GpMidi) <paul@gpmidi.net>
 @license: GPLv2
 @version: 0.1
-'''
-from .PasswdPolicyTest import *
-from .RecentEntriesTest import *
+"""
+from .EmptyGroupsTest import *
 from .LastSaveUser import *
 from .NonDefaultPrefsTest import *
-from .EmptyGroupsTest import *
+from .PasswdPolicyTest import *
+from .RecentEntriesTest import *
 from .VersionTest import *

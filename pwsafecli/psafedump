@@ -24,7 +24,10 @@ Created on Jul 22, 2011
 @author: paulson mcintyre <paul@gpmidi.net>
 @author: steve <rader@hep.wisc.edu>
 '''
-import logging, logging.config
+import logging
+import logging.config
+
+
 logger = logging.getLogger("psafebin.dump")
 log = logger.log
 logging.basicConfig(
@@ -32,17 +35,22 @@ logging.basicConfig(
                     format = '%(asctime)s %(levelname)s %(message)s',
                     )
 log(10, 'initing')
-import os, sys, os.path
+import os
+import os.path
+import sys
+from optparse import OptionParser
+
 # FIXME: Add in tests to make sure we can import all 
 # required libraries and generate non-coder errors
 # as to what is missing. 
 #try:
 import pypwsafe as pws
+
+
 #except ImportError:
 #    log(50, "Can't find the pypwsafe library")
 #    sys.exit(1)
     
-from optparse import OptionParser
 
 # TODO: Find a simpler way of doing this
 def show_entry(entry, opts):
@@ -74,9 +82,12 @@ def show_entry(entry, opts):
 def display_xml(entries, opts):
     raise NotImplementedError
 
-from StringIO import StringIO
-from csv import DictWriter
 import datetime
+from csv import DictWriter
+
+from StringIO import StringIO
+
+
 def display_csv(entries, opts):
     csvFields = [
                'Group',
