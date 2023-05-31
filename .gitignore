@@ -1,8 +1,22 @@
-/.project
-/.pydevproject
-/.settings
+*.pyc
+*.egg-info
+__pycache__
+
+.cache
+.pytest_cache
+.coverage
+.tox*
+.venv*
+.python-version
+
+build
+dist
+prof
+coverage.xml
+*.whl
+
+.vscode
 /MANIFEST
-/dist
 /python-pypwsafe-0.1
 /Test Script.py
 /_gsdata_
