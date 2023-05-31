@@ -1,0 +1,71 @@
+[project]
+name = "pypwsafe"
+version = "0.4"
+description = "Python interface to Password Safe v3 files."
+readme = "README.md"
+
+authors = [
+    {name = "Paulson McIntyre", email = "paul@gpmidi.net"},
+    {name = "H. Turgut Uyar", email = "uyar@tekir.org"},
+]
+license = {file = "LICENSE.txt"}
+
+keywords = [
+    "password", "login", "authentication", "passwordsafe", "security",
+    "psafe3",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Security :: Cryptography",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+
+requires-python = "~=3.8"
+dependencies = [
+    "pycrypto",
+]
+
+[project.optional-dependencies]
+dev = [
+    "tox",
+    "build",
+]
+
+[project.urls]
+repository = "https://github.com/uyar/pypwsafe"
+
+[tool.setuptools]
+packages = ["pypwsafe"]
+
+[tool.isort]
+lines_after_imports = 2
+multi_line_output = 2
+known_test = "pytest,unittest"
+sections = "FUTURE,TEST,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py{38,39,310,311}
+isolated_build = True
+
+[testenv]
+commands =
+    python tests/runMe.py
+"""
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
