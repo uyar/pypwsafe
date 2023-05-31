@@ -1,40 +1,39 @@
-#!/usr/bin/env python
-# ===============================================================================
-# SYMANTEC:     Copyright (C) 2009-2011 Symantec Corporation. All rights reserved.
+# =============================================================================
+# SYMANTEC:  Copyright (C) 2009-2011 Symantec Corporation. All rights reserved.
 #
 # This file is part of PyPWSafe.
 #
-#    PyPWSafe is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 2 of the License, or
-#    (at your option) any later version.
+# PyPWSafe is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
 #
-#    PyPWSafe is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+# PyPWSafe is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-# ===============================================================================
-""" Header objects for psafe v3
- 
-@author: Paulson McIntyre <paul@gpmidi.net>
-@license: GPLv2
-@version: 0.1
-"""
+# You should have received a copy of the GNU General Public License
+# along with PyPWSafe.  If not, see <http://www.gnu.org/licenses/>.
+# =============================================================================
+
+# original author: Paulson McIntyre <paul@gpmidi.net>
+
+"""Header objects for psafe v3."""
+
 # Note: Use "=" in all packs to account for 64bit systems
 
 import logging
 import logging.config
 import os
+import time
 from binascii import unhexlify
 from pprint import pformat
 from struct import pack, unpack
 from uuid import UUID, uuid4
 
-from .consts import *
-from .errors import *
+from . import consts, errors
+from .PWSafeV3Records import makedatetime
 
 
 # logging.config.fileConfig('/etc/mss/psafe_log.conf')
@@ -55,20 +54,22 @@ class _HeaderType(type):
 
 
 class Header(object, metaclass=_HeaderType):
-    """A psafe3 header object. Should be extended. This also servers as a "unknown" header type.
+    """A psafe3 header object. Should be extended.
+
+    This also serves as an "unknown" header type.
+
     raw_data    string        Real data that was passed
     data        string        Raw data minus padding and headers
     len        long        Number of bytes of data. May not be present until data has been parsed
     readblock_f    function    Read in another block of data
     TYPE        int        Header type that IDs it in psafe3
-
     """
 
     TYPE = None
     FIELD = None
 
     def __init__(self, htype, hlen, raw_data):
-        self.data = raw_data[5 : (hlen + 5)]
+        self.data = raw_data[5:(hlen + 5)]
         self.raw_data = raw_data
         self.len = int(hlen)
         if type(self) != Header:
@@ -79,15 +80,13 @@ class Header(object, metaclass=_HeaderType):
 
     def parse(self):
         """Parse the header. Should be overridden."""
-        pass
 
     def gen_blocks(self):
-        """Returns the raw data that should be stuck in a psafe file"""
+        """Return the raw data that should be stuck in a psafe file."""
         return self.raw_data
 
     def __repr__(self):
         # Can no longer depend on raw_data existing
-        # return "Header(%s,%d,%s)"%(repr(self.TYPE),self.len,repr(self.raw_data))
         s = self.serial()
         return "Header(%s,%d,%s)" % (repr(self.TYPE), len(s), repr(s))
 
@@ -95,7 +94,8 @@ class Header(object, metaclass=_HeaderType):
         return self.__repr__()
 
     def hmac_data(self):
-        """Returns the data segments that should be used for the HMAC. See bug 1812081."""
+        """Return the data segments that should be used for the HMAC."""
+        # ! See bug 1812081.
         return self.serial()
 
     def serial(self):
@@ -116,7 +116,7 @@ class Header(object, metaclass=_HeaderType):
         return padded
 
     def _pad(self, data):
-        """Pad out data to 16 bytes"""
+        """Pad out data to 16 bytes."""
         add_data = 16 - len(data) % 16
         if add_data == 16:
             add_data = 0
@@ -162,13 +162,13 @@ class VersionHeader(Header):
         self.version = unpack("=H", self.data)[0]
 
     def getVersionHuman(self):
-        if self.version in version_map:
-            return version_map[self.version]
+        if self.version in consts.version_map:
+            return consts.version_map[self.version]
         return "Unknown Version %r" % self.version
 
     def setVersionHuman(self, version):
-        if version in version_map:
-            self.version = version_map[version]
+        if version in consts.version_map:
+            self.version = consts.version_map[version]
         else:
             raise ValueError("Unknown version name %r" % version)
 
@@ -210,7 +210,7 @@ class UUIDHeader(Header):
                 self.uuid = uuid4()
 
     def parse(self):
-        """Parse data"""
+        """Parse data."""
         self.uuid = UUID(bytes=unpack("=16s", self.data)[0])
 
     def __repr__(self):
@@ -248,7 +248,7 @@ class NonDefaultPrefsHeader(Header):
             self.opts = kw
 
     def parse(self):
-        """Parse data"""
+        """Parse data."""
         self.opts = {}
         remander = self.data.split(" ")
         while len(remander) > 2:
@@ -259,12 +259,12 @@ class NonDefaultPrefsHeader(Header):
             del remander[0:3]
             if rtype == "B":
                 found = False
-                for name, info in list(conf_bools.items()):
+                for name, info in list(consts.conf_bools.items()):
                     if info["index"] == key:
                         found = True
                         break
                 if not found:
-                    raise ConfigItemNotFoundError(
+                    raise errors.ConfigItemNotFoundError(
                         "%d is not a valid configuration item" % key
                     )
                 if value == "0":
@@ -272,36 +272,36 @@ class NonDefaultPrefsHeader(Header):
                 elif value == "1":
                     self.opts[name] = True
                 else:
-                    raise PrefsValueError(
+                    raise errors.PrefsValueError(
                         "Expected either 0 or 1 for bool type, got %r" % value
                     )
             elif rtype == "I":
                 found = False
-                for name, info in list(conf_ints.items()):
+                for name, info in list(consts.conf_ints.items()):
                     if info["index"] == key:
                         found = True
                         break
                 if not found:
-                    raise ConfigItemNotFoundError(
+                    raise errors.ConfigItemNotFoundError(
                         "%d is not a valid configuration item" % key
                     )
                 try:
                     value = int(value)
                 except ValueError:
-                    raise PrefsDataTypeError("%r is not a valid int" % value)
+                    raise errors.PrefsDataTypeError("%r is not a valid int" % value)
                 if info["min"] != -1 and info["min"] > value:
-                    raise PrefsDataTypeError("%r is too small" % value)
+                    raise errors.PrefsDataTypeError("%r is too small" % value)
                 if info["max"] != -1 and info["max"] < value:
-                    raise PrefsDataTypeError("%r is too big" % value)
+                    raise errors.PrefsDataTypeError("%r is too big" % value)
                 self.opts[name] = value
             elif rtype == "S":
                 found = False
-                for name, info in list(conf_strs.items()):
+                for name, info in list(consts.conf_strs.items()):
                     if info["index"] == key:
                         found = True
                         break
                 if not found:
-                    raise ConfigItemNotFoundError(
+                    raise errors.ConfigItemNotFoundError(
                         "%d is not a valid configuration item" % key
                     )
                 # Remove "" or whatever the delimiter is
@@ -309,20 +309,20 @@ class NonDefaultPrefsHeader(Header):
                 if value[-1] == delm:
                     value = value[1:-1]
                 else:
-                    while not delm in remander[0] and len(remander) > 0:
+                    while (delm not in remander[0]) and (len(remander) > 0):
                         value += remander[0]
                         del remander[0]
                     value = value[1:-1]
                 # Save the pref
                 self.opts[name] = value
             else:
-                raise PrefsDataTypeError(
+                raise errors.PrefsDataTypeError(
                     "Unexpected record type for preferences %r" % rtype
                 )
         # Fill in defaults prefs
-        for typeS in [conf_bools, conf_ints, conf_strs]:
+        for typeS in [consts.conf_bools, consts.conf_ints, consts.conf_strs]:
             for name, info in list(typeS.items()):
-                if name not in self.opts and info["type"] == ptDatabase:
+                if name not in self.opts and info["type"] == consts.ptDatabase:
                     self.opts[name] = info["default"]
 
     def __repr__(self):
@@ -334,15 +334,15 @@ class NonDefaultPrefsHeader(Header):
     def serial(self):
         ret = ""
         for name, value in list(self.opts.items()):
-            if name not in conf_types:
-                raise PrefsValueError("%r is not a valid configuration option" % name)
-            typ = conf_types[name]
+            if name not in consts.conf_types:
+                raise errors.PrefsValueError("%r is not a valid configuration option" % name)
+            typ = consts.conf_types[name]
             if type(value) != typ:
-                raise PrefsDataTypeError(
+                raise errors.PrefsDataTypeError(
                     "%r is not a valid type for the key %r" % (type(value), name)
                 )
             if typ == bool:
-                if value == conf_bools[name]["default"]:
+                if value == consts.conf_bools[name]["default"]:
                     # Default value - Don't save
                     continue
                 if value is True:
@@ -350,43 +350,45 @@ class NonDefaultPrefsHeader(Header):
                 elif value is False:
                     value = 0
                 else:
-                    raise PrefsDataTypeError(
-                        "%r is not a valid value for the key %r" % (value, name)
+                    raise errors.PrefsDataTypeError(
+                        "%r is not a valid value for the key %r" % (value, consts.name)
                     )
-                ret += "B %d %d " % (conf_bools[name]["index"], value)
+                ret += "B %d %d " % (consts.conf_bools[name]["index"], value)
             elif typ == int:
                 value = int(value)
-                if value == conf_ints[name]["default"]:
+                if value == consts.conf_ints[name]["default"]:
                     # Default value - Don't save
                     continue
-                ret += "I %d %d " % (conf_ints[name]["index"], value)
+                ret += "I %d %d " % (consts.conf_ints[name]["index"], value)
             elif typ == str:
                 value = str(value)
-                if value == conf_strs[name]["default"]:
+                if value == consts.conf_strs[name]["default"]:
                     # Default value - Don't save
                     continue
                 delms = list("\"'#?!%&*+=:;@~<>?,.{}[]()\xbb")
                 delm = None
                 while delm is None and len(delms) > 0:
-                    if not delms[0] in value:
+                    if delms[0] not in value:
                         delm = delms[0]
                     else:
                         del delms[0]
                 if not delm:
-                    raise UnableToFindADelimitersError(
+                    raise errors.UnableToFindADelimitersError(
                         "Couldn't find a delminator for %r" % value
                     )
-                ret += "S %d %s%s%s " % (conf_strs[name]["index"], delm, value, delm)
+                ret += "S %d %s%s%s " % (consts.conf_strs[name]["index"], delm, value, delm)
             else:
-                raise PrefsDataTypeError(
+                raise errors.PrefsDataTypeError(
                     "Unexpected record type for preferences %r" % typ
                 )
         return ret
 
 
 # Header(3,14,'00000000000000'),
+
+
 class TreeDisplayStatusHeader(Header):
-    """Tree display status (what folders are expanded/collapsed"""
+    """Tree display status (what folders are expanded/collapsed)."""
 
     TYPE = 0x03
     FIELD = "status"
@@ -413,10 +415,7 @@ class TreeDisplayStatusHeader(Header):
         return self.status
 
 
-import time
-
 # Header(4,4,'Ao\xc8L'),
-from pypwsafe.PWSafeV3Records import makedatetime, parsedatetime
 
 
 class TimeStampOfLastSaveHeader(Header):
@@ -483,6 +482,8 @@ class WhoLastSavedHeader(Header):
 
 
 # Header(6,19,'Password Safe V3.23'),
+
+
 class LastSaveAppHeader(Header):
     """What app performed the last save
     lastSaveApp        string        Last saved by this app
@@ -514,6 +515,8 @@ class LastSaveAppHeader(Header):
 
 
 # Header(7,6,'owenst'),
+
+
 class LastSaveUserHeader(Header):
     """User who last saved the DB.
     username    string
@@ -545,6 +548,8 @@ class LastSaveUserHeader(Header):
 
 
 # Header(8,15,'SOMEHOSTNAME'),
+
+
 class LastSaveHostHeader(Header):
     """Host that last saved the DB
     hostname    string
@@ -606,8 +611,6 @@ class DBNameHeader(Header):
 
 
 class NamedPasswordPolicy(dict):
-    """ """
-
     def __init__(
         self,
         name,
@@ -623,7 +626,7 @@ class NamedPasswordPolicy(dict):
         minUppercaseCharCount=1,
         minDigitCount=1,
         minSpecialCharCount=1,
-        allowedSpecialSymbols=DEFAULT_SPECIAL_CHARS,
+        allowedSpecialSymbols=consts.DEFAULT_SPECIAL_CHARS,
     ):
         dict.__init__(
             self,
@@ -690,7 +693,7 @@ class NamedPasswordPoliciesHeader(Header):
                     raise ValueError("Expected a dict or NamedPasswordPolicy")
 
     def parse(self):
-        """Parse data"""
+        """Parse data."""
         self.namedPasswordPolicies = []
         left = self.data
         # print repr(left)
@@ -744,9 +747,9 @@ class NamedPasswordPoliciesHeader(Header):
                 makepron = False
             if specialCharsLen == 0:
                 if useeasy:
-                    specialChars = DEFAULT_EASY_SPECIAL_CHARS
+                    specialChars = consts.DEFAULT_EASY_SPECIAL_CHARS
                 else:
-                    specialChars = DEFAULT_SPECIAL_CHARS
+                    specialChars = consts.DEFAULT_SPECIAL_CHARS
             else:
                 specialChars = left[:specialCharsLen]
                 left = left[:specialCharsLen]
@@ -797,12 +800,12 @@ class NamedPasswordPoliciesHeader(Header):
                 flags = flags | self.MAKEPRONOUNCEABLE
             if (
                 policy.useEasyVision
-                and policy.allowedSpecialSymbols == DEFAULT_EASY_SPECIAL_CHARS
+                and policy.allowedSpecialSymbols == consts.DEFAULT_EASY_SPECIAL_CHARS
             ):
                 allowedSpecialSymbols = ""
             elif (
                 not policy.useEasyVision
-                and policy.allowedSpecialSymbols == DEFAULT_SPECIAL_CHARS
+                and policy.allowedSpecialSymbols == consts.DEFAULT_SPECIAL_CHARS
             ):
                 allowedSpecialSymbols = ""
             else:
@@ -893,12 +896,16 @@ class RecentEntriesHeader(Header):
     recentEntries        List of UUIDs
 
     A list of the UUIDs (32 hex character representation of the 16 byte field)
-    of the recently used entries, prefixed by a 2 hex character representation
-    of the number of these entries (right justified and left filled with zeroes).
-    The size of the number of entries field gives a maximum number of entries of 255,
-    however the GUI may impose further restrictions e.g. Windows MFC UI limits this
-    to 25. The first entry is the most recent entry accessed. This field was
-    introduced in format version 0x0307.
+    of the recently used entries,
+    prefixed by a 2 hex character representation
+    of the number of these entries
+    (right justified and left filled with zeroes).
+    The size of the number of entries field gives
+    a maximum number of entries of 255,
+    however the GUI may impose further restrictions
+    e.g. Windows MFC UI limits this to 25.
+    The first entry is the most recent entry accessed.
+    This field was introduced in format version 0x0307.
     """
 
     TYPE = 0x0F
@@ -948,9 +955,9 @@ class EmptyGroupHeader(Header):
     """An empty group - May appear multiple times.
      groupName        Group name
 
-    This fields contains the name of an empty group that cannot be constructed
-    from entries within the database. Unlike other header fields, this field can appear
-    multiple times.
+    This fields contains the name of an empty group
+    that cannot be constructed from entries within the database.
+    Unlike other header fields, this field can appear multiple times.
     """
 
     TYPE = 0x11
@@ -1009,8 +1016,10 @@ class EOFHeader(Header):
 
 
 def Create_Header(fetchblock_f):
-    """Returns a header object. Uses fetchblock_f to read a 16 byte chunk of data
-    fetchblock_f(number of blocks)
+    """Return a header object.
+
+    Uses fetchblock_f to read a 16 byte chunk of data fetchblock_f
+    (number of blocks).
     """
     firstblock = fetchblock_f(1)
     log.debug("Header of header: %s" % repr(firstblock[:5]))

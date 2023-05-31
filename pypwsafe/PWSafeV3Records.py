@@ -1,29 +1,25 @@
-#!/usr/bin/env python
-# -*- coding: latin-1 -*-
-# ===============================================================================
-# SYMANTEC:     Copyright (C) 2009-2011 Symantec Corporation. All rights reserved.
+# =============================================================================
+# SYMANTEC:  Copyright (C) 2009-2011 Symantec Corporation. All rights reserved.
 #
 # This file is part of PyPWSafe.
 #
-#    PyPWSafe is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 2 of the License, or
-#    (at your option) any later version.
+# PyPWSafe is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
 #
-#    PyPWSafe is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+# PyPWSafe is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-# ===============================================================================
-"""Record and record propriety objects
+# You should have received a copy of the GNU General Public License
+# along with PyPWSafe.  If not, see <http://www.gnu.org/licenses/>.
+# =============================================================================
 
-@author: Paulson McIntyre <paul@gpmidi.net>
-@license: GPLv2
-@version: 0.1
-"""
+# original author: Paulson McIntyre <paul@gpmidi.net>
+
+"""Record and record propriety objects."""
 
 import calendar
 import datetime
@@ -34,7 +30,7 @@ import time
 from struct import pack, unpack
 from uuid import UUID, uuid4
 
-from .errors import *
+from . import errors
 
 
 # logging.config.fileConfig('/etc/mss/psafe_log.conf')
@@ -74,7 +70,8 @@ class Record(object):
             psafe_logger.debug("Creating blank object")
             # Create the UUID object
             self._if_noitem(UUIDRecordProp.rNAME)
-            # Create the EOE object. This must happen last and can't use the if_noitem because it may
+            # Create the EOE object.
+            # This must happen last and can't use the if_noitem because it may
             # insert somewhere besides the end.
             eoe = EOERecordProp()
             self.records.append(eoe)
@@ -120,7 +117,8 @@ class Record(object):
         return len(self.records)
 
     def hmac_data(self):
-        """Returns the data required for the "broken" hmac in psafe3. See bug 1812081."""
+        """Returns the data required for the "broken" hmac in psafe3."""
+        # ! See bug 1812081.
         ret = ""
         for i in self.records:
             # the data field has the data minus the padding
@@ -411,9 +409,11 @@ class _RecordPropType(type):
             RecordPropTypes[cls.rTYPE] = cls
 
 
-#     Record Prop
 class RecordProp(object, metaclass=_RecordPropType):
-    """A single property of a psafe3 record. This represents an unknown type or is overridden by records of a known type.
+    """A single property of a psafe3 record.
+
+    This represents an unknown type or is overridden by records of a known type.
+
     rTYPE        int        Properity type. May be null.
     rNAME        string        Code name of properity type.
     type        int        Prop type.
@@ -1120,7 +1120,8 @@ class AutotypeRecordProp(RecordProp):
 
 
 class PasswordHistoryRecordProp(RecordProp):
-    """Record's old passwords
+    """Record's old passwords.
+
     Password History is an optional record. If it exists, it stores the
     creation times and values of the last few passwords used in the current
     entry, in the following format:
@@ -1202,7 +1203,7 @@ class PasswordHistoryRecordProp(RecordProp):
             elif self.data[0] == "1":
                 self.enabled = True
             else:
-                raise PropParsingError(
+                raise errors.PropParsingError(
                     "Invalid enabled/disabled flag %s" % repr(self.data[0])
                 )
             psafe_logger.debug("Set password history to %s", repr(self.enabled))
@@ -1210,9 +1211,9 @@ class PasswordHistoryRecordProp(RecordProp):
             try:
                 self.maxsize = int(self.data[1:3], 16)
             except ValueError:
-                raise PropParsingError("Invalid maxsize type %s" % repr(self.data[1:3]))
+                raise errors.PropParsingError("Invalid maxsize type %s" % repr(self.data[1:3]))
             if self.maxsize < 0 or self.maxsize > 255:
-                raise PropParsingError(
+                raise errors.PropParsingError(
                     "Invalid maxsize value %s" % repr(self.data[1:3])
                 )
             psafe_logger.debug("Set password history max size to %d", self.maxsize)
@@ -1220,9 +1221,9 @@ class PasswordHistoryRecordProp(RecordProp):
             try:
                 self._cursize = int(self.data[3:5], 16)
             except ValueError:
-                raise PropParsingError("Invalid cursize type %s" % repr(self.data[3:5]))
+                raise errors.PropParsingError("Invalid cursize type %s" % repr(self.data[3:5]))
             if self._cursize < 0 or self._cursize > 255:
-                raise PropParsingError(
+                raise errors.PropParsingError(
                     "Invalid cursize value %s" % repr(self.data[3:5])
                 )
             psafe_logger.debug(
@@ -1247,7 +1248,7 @@ class PasswordHistoryRecordProp(RecordProp):
                     data = data[len_real:]
                     self.history.append((tm, password))
             except ValueError:
-                raise PropParsingError("Error parsing password history")
+                raise errors.PropParsingError("Error parsing password history")
             assert self._cursize == len(self.history)
 
     def __repr__(self):
@@ -1287,10 +1288,10 @@ class PasswordHistoryRecordProp(RecordProp):
 
 
 class PasswordPolicyRecordProp(RecordProp):
-    """Record's title
-        This field allows a specific Password Policy per entry.  The format is:
-        ffffnnnllluuudddsss"
-    where:
+    """Record's title.
+
+    This field allows a specific Password Policy per entry.  The format is:
+    ffffnnnllluuudddsss" where:
          ffff = 4 hexadecimal digits representing the following flags
             UseLowercase =      0x8000  - can have a minimum length
             UseUppercase =      0x4000  - can have a minimum length
@@ -1481,11 +1482,12 @@ class PasswordPolicyRecordProp(RecordProp):
 
 class PasswordExpiryIntervalRecordProp(RecordProp):
     """Number of days before the password expires.
-    Password Expiry Interval, in days, before this password expires. Once set,
-    this value is used when the password is first generated and thereafter whenever
-    the password is changed, until this value is unset.  Valid values are 1-3650
-    corresponding to up to approximately 10 years.  A value of zero is equivalent to
-    this field not being set.
+
+    Password Expiry Interval, in days, before this password expires.
+    Once set, this value is used when the password is first generated
+    and thereafter whenever the password is changed, until this value is unset.
+    Valid values are 1-3650 corresponding to up to approximately 10 years.
+    A value of zero is equivalent to this field not being set.
 
         ttl        string        Title
     >>> x=PasswordExpiryIntervalRecordProp(0x11,4,'\x04\x00\x00\x00\x11\n\x00\x00\x00\xf1\xe9\xb1\xd0e\xd6h')
@@ -1572,8 +1574,9 @@ class RunCommandRecordProp(RecordProp):
 
 
 class DoubleClickActionRecordProp(RecordProp):
-    """Double click action
-    A two byte field contain the value of the Double-Click Action 'preference
+    """Double click action.
+
+    A two byte field contain the value of the Double-Click Action 'preference.
     390    value' (0xff means use the current Application default):
     391    Current 'preference values' are:
     392        CopyPassword           0
@@ -1633,10 +1636,10 @@ class DoubleClickActionRecordProp(RecordProp):
 
 
 class EmailAddressRecordProp(RecordProp):
-    """Account email address field
-    Separate Email address field as per RFC 2368 (without the 'mailto:'
-    prefix. This field was introduced in version 0x0306 (PasswordSafe V3.19).
+    """Account email address field.
 
+    Separate Email address field as per RFC 2368 (without the 'mailto:' prefix.
+    This field was introduced in version 0x0306 (PasswordSafe V3.19).
     """
 
     rTYPE = 0x14
@@ -1673,11 +1676,14 @@ class EmailAddressRecordProp(RecordProp):
 
 class ProtectedEntryRecordProp(RecordProp):
     """Is the entry protected from being changed/deleted.
+
     Entry is protected, i.e., the entry cannot be changed or deleted
-    while this field is set. This field was introduced in version 0x0308
-    (PasswordSafe V3.25).  This a single byte. An absent field or a zero
-    valued field means that the entry is not protected. Any non-zero value
-    means that the entry is protected.
+    while this field is set.
+    This field was introduced in version 0x0308 (PasswordSafe V3.25).
+    This a single byte.
+    An absent field or a zero valued field means
+    that the entry is not protected.
+    Any non-zero value means that the entry is protected.
     """
 
     rTYPE = 0x15
@@ -1718,10 +1724,12 @@ class ProtectedEntryRecordProp(RecordProp):
 
 class SymbolsForPasswordRecordProp(RecordProp):
     """Symbols that can be used in randomly generated passwords.
-    Each entry can now specify its own set of allowed special symbols for
-    password generation.  This overrides the default set and any database specific
-    set. This field is mutually exclusive with the policy name field
-    [0x18].  This was introduced in version 0x0309 (PasswordSafe V3.26).
+
+    Each entry can now specify its own set of allowed special symbols
+    for password generation.
+    This overrides the default set and any database specific set.
+    This field is mutually exclusive with the policy name field [0x18].
+    This was introduced in version 0x0309 (PasswordSafe V3.26).
     """
 
     rTYPE = 0x16
@@ -1757,7 +1765,8 @@ class SymbolsForPasswordRecordProp(RecordProp):
 
 
 class ShiftDoubleClickActionRecordProp(RecordProp):
-    """Shift Double click action
+    """Shift Double click action.
+
     A two byte field contain the value of the Double-Click Action 'preference
     390    value' (0xff means use the current Application default):
     391    Current 'preference values' are:
@@ -1769,8 +1778,6 @@ class ShiftDoubleClickActionRecordProp(RecordProp):
     397        CopyUsername           5
     398        CopyPasswordMinimize   6
     399        BrowsePlus             7
-
-
     """
 
     rTYPE = 0x17
@@ -1818,12 +1825,13 @@ class ShiftDoubleClickActionRecordProp(RecordProp):
 
 
 class PasswordPolicyNameRecordProp(RecordProp):
-    """Password Policy Name
-    Each entry can now specify the name of a Password Policy saved in
-    the database header for password generation. This field is mutually
-    exclusive with the specific policy field [0x10] and with the Own
-    symbols for password field [0x16]. This was introduced in version
-    0x0311 (PasswordSafe V3.28).
+    """Password Policy Name.
+
+    Each entry can now specify the name of a Password Policy saved
+    in the database header for password generation.
+    This field is mutually exclusive with the specific policy field [0x10]
+    and with the Own symbols for password field [0x16].
+    This was introduced in version 0x0311 (PasswordSafe V3.28).
     """
 
     rTYPE = 0x18
@@ -1859,7 +1867,7 @@ class PasswordPolicyNameRecordProp(RecordProp):
 
 
 class EOERecordProp(RecordProp):
-    """End of entry
+    """End of entry.
 
     >>> x=EOERecordProp(0xff,0,'\x00\x00\x00\x00\xff\xb5\xce\xd9 =\xe99\x14\xc1.\xfe')
     >>> repr(x)
@@ -1901,7 +1909,7 @@ class EOERecordProp(RecordProp):
 
 
 def parsedatetime(data):
-    """Takes in the raw psafev3 data for a time value and returns a date/time tuple"""
+    """Take in raw psafev3 data for a time value and return a date/time tuple."""
     return time.gmtime(unpack("=i", data)[0])
 
 
@@ -1910,8 +1918,10 @@ def makedatetime(dt):
 
 
 def Create_Prop(fetchblock_f):
-    """Returns a record properity. Uses fetchblock_f to read a 16 byte chunk of data
-    fetchblock_f(number of blocks)
+    """Return a record properity.
+
+    Uses fetchblock_f to read a 16 byte chunk of data fetchblock_f
+    (number of blocks)
     """
     psafe_logger.debug("Create_Prop")
     firstblock = fetchblock_f(1)

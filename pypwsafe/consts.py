@@ -1,34 +1,31 @@
-# ===============================================================================
-# SYMANTEC:     Copyright (C) 2009-2011 Symantec Corporation. All rights reserved.
+# =============================================================================
+# SYMANTEC:  Copyright (C) 2009-2011 Symantec Corporation. All rights reserved.
 #
 # This file is part of PyPWSafe.
 #
-#    PyPWSafe is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 2 of the License, or
-#    (at your option) any later version.
+# PyPWSafe is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
 #
-#    PyPWSafe is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+# PyPWSafe is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-# ===============================================================================
-""" Useful constants 
+# You should have received a copy of the GNU General Public License
+# along with PyPWSafe.  If not, see <http://www.gnu.org/licenses/>.
+# =============================================================================
 
-@author: Paulson McIntyre <paul@gpmidi.net>
-@license: GPLv2
-@version: 0.1
+# original author: Paulson McIntyre <paul@gpmidi.net>
 
-Created on Oct 27, 2010
-"""
+"""Useful constants."""
+
 # Default special chars
 DEFAULT_SPECIAL_CHARS = "+-=_@#$%^&;:,.<>/~\\[](){}?!|"
 DEFAULT_EASY_SPECIAL_CHARS = "+-=_@#$%^<>/~\\?"
 
-#                Configuration options
+# Configuration options
 
 # Double click and shift double clickactions
 click_actions = dict(
@@ -44,7 +41,7 @@ click_actions = dict(
     DoubleClickSendEmail=9,
 )
 
-#            Configuration Statics
+# Configuration Statics
 ptApplication = 0
 ptDatabase = 1
 ptObsolete = 2
@@ -66,7 +63,7 @@ version_map = {
     "PasswordSafe V3.29Y": 0x030C,
 }
 
-#            Bools
+# Bools
 conf_bools = {
     "AlwaysOnTop": {
         "default": False,
@@ -212,7 +209,12 @@ conf_bools = {
         "name": "EscExits",
         "index": 23,
     },
-    "IsUTF8": {"default": False, "type": ptDatabase, "name": "IsUTF8", "index": 24},
+    "IsUTF8": {
+        "default": False,
+        "type": ptDatabase,
+        "name": "IsUTF8",
+        "index": 24,
+    },
     "HotKeyEnabled": {
         "default": False,
         "type": ptApplication,
@@ -395,7 +397,7 @@ conf_bools = {
     },
 }
 
-#            Ints
+# Ints
 conf_ints = {
     "column1width": {
         "name": "column1width",
@@ -583,7 +585,7 @@ conf_ints = {
     },
 }
 
-#            Strings
+# Strings
 conf_strs = {
     "currentbackup": {
         "name": "currentbackup",
@@ -719,7 +721,7 @@ conf_strs = {
     },
 }
 
-#           Type Mappings
+# Type Mappings
 conf_types = {}
 for name, info in list(conf_bools.items()):
     conf_types[name] = bool
