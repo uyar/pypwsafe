@@ -46,7 +46,7 @@ class TestSafeTestBase(unittest.TestCase):
     def setUp(self):
         assert self.testSafe
 
-        self.safeLoc = os.path.join("../test_safes", self.testSafe)
+        self.safeLoc = os.path.join("test_safes", self.testSafe)
         assert os.access(self.safeLoc, os.R_OK)
 
         # Make a temp dir and make a copy

@@ -67,8 +67,9 @@ envlist = py{38,39,310,311}, style
 isolated_build = True
 
 [testenv]
+changedir = tests
 commands =
-    python tests/runMe.py
+    python runMe.py
 
 [testenv:style]
 skip_install = true
