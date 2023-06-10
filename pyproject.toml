@@ -2,7 +2,7 @@
 name = "pypwsafe"
 version = "0.4"
 description = "Python interface to Password Safe v3 files."
-readme = "README.md"
+readme = "README.rst"
 
 authors = [
     {name = "Paulson McIntyre", email = "paul@gpmidi.net"},
