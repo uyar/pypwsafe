@@ -29,11 +29,11 @@ import os
 import os.path
 import re
 import socket
+from hashlib import sha256
 from hmac import new as HMAC
 from struct import pack, unpack
 from uuid import uuid4
 
-from Crypto.Hash import SHA256
 from pygcrypt.ciphers import Cipher
 
 from . import headers, errors
@@ -56,14 +56,14 @@ def stretchkey(passwd, salt, count):
     """
     assert count > 0
     # Hash once with both
-    inithsh = SHA256.new()
+    inithsh = sha256()
     inithsh.update(passwd)
     inithsh.update(salt)
     # Expecting it in binary form; NOT HEX FORM
     hsh = inithsh.digest()
     # Rehash
     for i in range(count):
-        t = SHA256.new()
+        t = sha256()
         t.update(hsh)
         hsh = t.digest()
     return hsh
@@ -330,7 +330,7 @@ class PWSafe3(object):
         """Regenerate H(P')
         Save the SHA256 of self.pprime.
         """
-        hsh = SHA256.new()
+        hsh = sha256()
         hsh.update(self.pprime)
         self.hpprime = hsh.digest()
         log.debug("Set H(P') to % s" % repr(self.hpprime))
@@ -490,14 +490,14 @@ class PWSafe3(object):
             )
             data += i.hmac_data()
         log.debug("Building hmac with key %s", repr(self.hshkey))
-        hm = HMAC(self.hshkey, data, SHA256)
+        hm = HMAC(self.hshkey, data, sha256)
         # print hm.hexdigest()
         log.debug("HMAC %s-%s", repr(hm.hexdigest()), repr(hm.digest()))
         return hm.digest()
 
     def check_password(self):
         """Check that the hash in self.pprime matches what's in the password safe. True if password matches hash in hpprime. False otherwise"""
-        hsh = SHA256.new()
+        hsh = sha256()
         hsh.update(self.pprime)
         return hsh.digest() == self.hpprime
 
