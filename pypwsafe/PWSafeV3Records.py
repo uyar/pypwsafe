@@ -132,7 +132,7 @@ class Record(object):
 
     def serialiaze(self):
         """ """
-        ret = ""
+        ret = b""
         for r in self.records:
             ret += r.serialiaze()
         return ret
@@ -486,7 +486,7 @@ class RecordProp(object, metaclass=_RecordPropType):
         add_data = 16 - len(data) % 16
         if add_data == 16:
             add_data = 0
-        padding = ""
+        padding = b""
         for i in range(0, add_data):
             padding += self._rand_char()
         assert add_data != 16
@@ -503,7 +503,9 @@ class RecordProp(object, metaclass=_RecordPropType):
     def serialiaze(self):
         """Returns the raw data blocks to generate this object."""
         serial = self.serial()
-        header = pack("=lc", len(serial), chr(self.rTYPE))
+        header = pack("=lc", len(serial), chr(self.rTYPE).encode("iso8859-1"))
+        if isinstance(serial, str):
+            serial = serial.encode("us-ascii")
         padded = self._pad(header + serial)
         psafe_logger.debug("Padded output %s" % repr(padded))
         return padded

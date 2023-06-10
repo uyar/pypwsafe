@@ -103,15 +103,18 @@ class Header(object, metaclass=_HeaderType):
 
     def serialiaze(self):
         serial = self.serial()
+        type_ = chr(self.TYPE).encode("iso8859-1")
         log.debug(
             "len: %s type: %s final: %s"
             % (
                 len(serial),
-                repr(chr(self.TYPE)),
-                repr(pack("=lc", len(serial), chr(self.TYPE))),
+                repr(type_),
+                repr(pack("=lc", len(serial), type_)),
             )
         )
-        padded = self._pad(pack("=lc", len(serial), chr(self.TYPE)) + serial)
+        if isinstance(serial, str):
+            serial = serial.encode("us-ascii")
+        padded = self._pad(pack("=lc", len(serial), type_) + serial)
         log.debug("Padded data %s" % repr(padded))
         return padded
 
@@ -120,7 +123,7 @@ class Header(object, metaclass=_HeaderType):
         add_data = 16 - len(data) % 16
         if add_data == 16:
             add_data = 0
-        padding = ""
+        padding = b""
         for i in range(0, add_data):
             padding += os.urandom(1)
         assert len(padding) == add_data
@@ -935,7 +938,7 @@ class RecentEntriesHeader(Header):
             segement = left[:LEN]
             left = left[LEN:]
             log.debug("Working with %r", segement)
-            found = UUID(segement)
+            found = UUID(segement.decode("us-ascii"))
             log.debug("Found UUID of %r", found)
             self.recentEntries.append(found)
         log.debug("Left over: %r", left)

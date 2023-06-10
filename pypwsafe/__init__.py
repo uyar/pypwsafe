@@ -37,6 +37,7 @@ from Crypto.Hash import SHA256
 from pygcrypt.ciphers import Cipher
 
 from . import PWSafeV3Headers, PWSafeV3Records, errors
+from .PWSafeV3Records import Record
 
 
 log = logging.getLogger("psafe.lib.init")
@@ -259,7 +260,7 @@ class PWSafe3(object):
         if self.mode == "RW":
             self.serialiaze()
             fil = open(self.filename, "w")
-            fil.write(self.flfull)
+            fil.write(self.flfull.decode("iso8859-1"))
             fil.close()
         else:
             raise errors.ROSafe("Safe is not in read/write mode")
@@ -289,7 +290,7 @@ class PWSafe3(object):
             self.iv,
         )
         log.debug("Pre-header flfull now %s", (self.flfull,))
-        self.fulldata = ""
+        self.fulldata = b""
         for header in self.headers:
             self.fulldata += header.serialiaze()
             # log.debug("In header flfull now %s",(self.flfull,))
@@ -402,7 +403,7 @@ class PWSafe3(object):
         # Parse DB
         self.records = []
         while len(self.remaining_headers) > 0:
-            req = PWSafeV3Records.Record(self._fetch_block)
+            req = Record(self._fetch_block)
             self.records.append(req)
 
         if self.current_hmac(cached=True) != self.hmac:
@@ -463,8 +464,8 @@ class PWSafe3(object):
         """Encrypted fulldata to cryptdata."""
         tw = Cipher(b"TWOFISH", "CBC")
         # HTU tw.init(self.enckey, self.iv)
-        tw.key = self.enckey.encode("us-ascii")
-        tw.iv = self.iv.encode("us-ascii")
+        tw.key = self.enckey
+        tw.iv = self.iv
         self.cryptdata = tw.encrypt(self.fulldata)
 
     def current_hmac(self, cached=False):
