@@ -38,12 +38,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+tests = [
+    "pytest",
+    "pytest-cov",
+]
 style = [
     "flake8",
     "flake8-isort",
 ]
 dev = [
-    "pypwsafe[style]",
+    "pypwsafe[tests,style]",
     "tox",
     "build",
 ]

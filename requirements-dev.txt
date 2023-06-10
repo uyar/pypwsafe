@@ -3,10 +3,13 @@ build==0.10.0
 cachetools==5.3.1
 chardet==5.1.0
 colorama==0.4.6
+coverage==7.2.7
 distlib==0.3.6
+exceptiongroup==1.1.1
 filelock==3.12.0
 flake8==6.0.0
 flake8-isort==6.0.0
+iniconfig==2.0.0
 isort==5.12.0
 mccabe==0.7.0
 packaging==23.1
@@ -16,6 +19,8 @@ pycodestyle==2.10.0
 pyflakes==3.0.1
 pyproject_api==1.5.1
 pyproject_hooks==1.0.0
+pytest==7.3.1
+pytest-cov==4.1.0
 tomli==2.0.1
 tox==4.5.2
 virtualenv==20.23.0
