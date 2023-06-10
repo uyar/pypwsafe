@@ -100,7 +100,7 @@ def _setHeaderField(headers, htype, value):
     return False
 
 
-class PWSafe3(object):
+class PWSafe3:
     """A Password safe object.
 
     Allows read/write access to most header fields and records

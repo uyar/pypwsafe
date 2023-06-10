@@ -45,7 +45,7 @@ headers = {}
 
 class _HeaderType(type):
     def __init__(cls, name, bases, dct):
-        super(_HeaderType, cls).__init__(name, bases, dct)
+        super().__init__(name, bases, dct)
         # Skip any where TYPE is none, such as the base class
         if cls.TYPE:
             # Make sure no type ids are duplicated
@@ -53,7 +53,7 @@ class _HeaderType(type):
             headers[cls.TYPE] = cls
 
 
-class Header(object, metaclass=_HeaderType):
+class Header(metaclass=_HeaderType):
     """A psafe3 header object. Should be extended.
 
     This also serves as an "unknown" header type.

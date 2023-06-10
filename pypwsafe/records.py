@@ -41,7 +41,7 @@ psafe_logger.debug("initing")
 RecordPropTypes = {}
 
 
-class Record(object):
+class Record:
     """Represents a psafe3 record
     Container item: Name of properity
     Attrs
@@ -406,13 +406,13 @@ class Record(object):
 
 class _RecordPropType(type):
     def __init__(cls, name, bases, dct):
-        super(_RecordPropType, cls).__init__(name, bases, dct)
+        super().__init__(name, bases, dct)
         # Skip any where rType is none, such as the base class
         if cls.rTYPE:
             RecordPropTypes[cls.rTYPE] = cls
 
 
-class RecordProp(object, metaclass=_RecordPropType):
+class RecordProp(metaclass=_RecordPropType):
     """A single property of a psafe3 record.
 
     This represents an unknown type or is overridden by records of a known type.
