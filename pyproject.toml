@@ -10,10 +10,7 @@ authors = [
 ]
 license = {file = "LICENSE.txt"}
 
-keywords = [
-    "password", "login", "authentication", "passwordsafe", "security",
-    "psafe3",
-]
+keywords = ["password", "login", "authentication", "passwordsafe", "security"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -58,6 +55,16 @@ repository = "https://github.com/uyar/pypwsafe"
 [tool.setuptools]
 packages = ["pypwsafe"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source_pkgs = ["pypwsafe"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
 [tool.isort]
 lines_after_imports = 2
 multi_line_output = 2
@@ -71,16 +78,20 @@ envlist = py{38,39,310,311}, style
 isolated_build = True
 
 [testenv]
-changedir = tests
+extras = tests
 commands =
-    python runMe.py
+    pytest
+
+[testenv:coverage]
+extras = tests
+commands =
+    pytest --cov
 
 [testenv:style]
 skip_install = true
 deps =
     flake8
     flake8-isort
-changedir = {toxinidir}
 commands =
     flake8 pypwsafe
 """

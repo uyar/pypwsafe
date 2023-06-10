@@ -1,39 +1,31 @@
-#!/usr/bin/env python
-# ===============================================================================
+# =============================================================================
 # This file is part of PyPWSafe.
 #
-#    PyPWSafe is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 2 of the License, or
-#    (at your option) any later version.
+# PyPWSafe is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 2 of the License, or
+# (at your option) any later version.
 #
-#    PyPWSafe is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
+# PyPWSafe is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
 #
-#    You should have received a copy of the GNU General Public License
-#    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-# ===============================================================================
-""" Test the version fields
-Created on Jan 19, 2013
+# You should have received a copy of the GNU General Public License
+# along with PyPWSafe.  If not, see <http://www.gnu.org/licenses/>.
+# =============================================================================
 
-@author: Paulson McIntyre (GpMidi) <paul@gpmidi.net>
-@license: GPLv2
-@version: 0.1
-"""
+# original author: Paulson McIntyre <paul@gpmidi.net>
+
 import unittest
-
-import os
-import os.path
-import sys
 
 from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
 
 
 class VersionTest_DBLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name. The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above)
+    # Should be overridden with a test safe file name.
+    # The path should be relative to the test_safes directory.
+    # All test safes must have the standard password (see above).
     testSafe = "VersionTest.psafe3"
     # Automatically open safes
     autoOpenSafe = False
@@ -56,8 +48,9 @@ class VersionTest_DBLevel(TestSafeTestBase):
 
 
 class VersionTest_RecordLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name. The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above)
+    # Should be overridden with a test safe file name.
+    # The path should be relative to the test_safes directory.
+    # All test safes must have the standard password (see above).
     testSafe = "VersionTest.psafe3"
     # Automatically open safes
     autoOpenSafe = True
