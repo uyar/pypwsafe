@@ -85,7 +85,7 @@ def display_xml(entries, opts):
 import datetime
 from csv import DictWriter
 
-from StringIO import StringIO
+from io import StringIO
 
 
 def display_csv(entries, opts):
@@ -107,21 +107,21 @@ def display_csv(entries, opts):
     by_groups = {}
     for entry in entries:
         group = '.'.join(entry['Group'])
-        if not by_groups.has_key(group):
+        if group not in by_groups:
             by_groups[group] = []
         by_groups[group].append(entry)
-    groups = by_groups.keys()
+    groups = list(by_groups.keys())
     groups.sort()
     csvString = StringIO()
     c = DictWriter(csvString, csvFields)
-    c.writerow(dict(zip(csvFields, csvFields)))
+    c.writerow(dict(list(zip(csvFields, csvFields))))
     for group in groups:
         by_groups[group].sort(lambda a, b: cmp(a['Title'] + a['Username'], b['Title'] + b['Username']))
         for entry in by_groups[group]:
             policy = entry['PasswordPolicy']
             history = []
             # May want to add in dt at some point
-            for dt, pwd in entry['PasswordHistory']['history'].items():
+            for dt, pwd in list(entry['PasswordHistory']['history'].items()):
                 history.append(pwd)
             c.writerow({
                        'Group':'.'.join(entry['Group']),
@@ -147,10 +147,10 @@ def display_display(entries, opts):
     by_groups = {}
     for entry in entries:
         group = '.'.join(entry['Group'])
-        if not by_groups.has_key(group):
+        if group not in by_groups:
             by_groups[group] = []
         by_groups[group].append(entry)
-    groups = by_groups.keys()
+    groups = list(by_groups.keys())
     # In place!
     groups.sort()
     for group in groups:
@@ -311,7 +311,7 @@ A CLI interface for viewing Password Safe files.
                                 )
             log(10, "Got psafe object %r", psafe)
             break
-        except pws.PasswordError:
+        except pws.errors.PasswordError:
             log(10, "Password error - Trying next password if any")
             continue
     
@@ -324,9 +324,8 @@ A CLI interface for viewing Password Safe files.
             to_display.append(entry)
 
     if opts.xml:
-        print display_xml(to_display, opts)
+        print(display_xml(to_display, opts))
     elif opts.csv:
-        print display_csv(to_display, opts)
+        print(display_csv(to_display, opts))
     elif opts.display:
-        print display_display(to_display, opts)    
-    
+        print(display_display(to_display, opts))
