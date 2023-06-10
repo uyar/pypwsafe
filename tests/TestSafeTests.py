@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with PyPWSafe.  If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
 # ===============================================================================
-""" Test the pypwsafe API - Provides tests based on the different test safes. 
+""" Test the pypwsafe API - Provides tests based on the different test safes.
 
 @author: Paulson McIntyre (GpMidi) <paul@gpmidi.net>
 @license: GPLv2
@@ -25,7 +25,6 @@ import unittest
 
 import os
 import os.path
-import sys
 from shutil import copyfile, rmtree
 from tempfile import mkdtemp
 
@@ -73,5 +72,5 @@ class TestSafeTestBase(unittest.TestCase):
     def tearDown(self):
         try:
             rmtree(self.safeDir)
-        except:
+        except Exception:
             pass

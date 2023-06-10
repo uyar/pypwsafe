@@ -25,9 +25,9 @@ Created on Jan 19, 2013
 import unittest
 
 import logging
-import os
-import os.path
 import sys
+
+from PWSv3Headers import *
 
 
 logging.basicConfig(
@@ -35,8 +35,6 @@ logging.basicConfig(
     filename="/tmp/pypwsafe_unittests.log",
     filemode="w",
 )
-
-from PWSv3Headers import *
 
 
 if __name__ == "__main__":

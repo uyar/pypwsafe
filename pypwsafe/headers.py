@@ -801,15 +801,11 @@ class NamedPasswordPoliciesHeader(Header):
                 flags = flags | self.USEEASYVERSION
             if policy.makePronounceable:
                 flags = flags | self.MAKEPRONOUNCEABLE
-            if (
-                policy.useEasyVision
-                and policy.allowedSpecialSymbols == consts.DEFAULT_EASY_SPECIAL_CHARS
-            ):
+            if policy.useEasyVision and \
+                    (policy.allowedSpecialSymbols == consts.DEFAULT_EASY_SPECIAL_CHARS):
                 allowedSpecialSymbols = ""
-            elif (
-                not policy.useEasyVision
-                and policy.allowedSpecialSymbols == consts.DEFAULT_SPECIAL_CHARS
-            ):
+            elif (not policy.useEasyVision) and \
+                    (policy.allowedSpecialSymbols == consts.DEFAULT_SPECIAL_CHARS):
                 allowedSpecialSymbols = ""
             else:
                 allowedSpecialSymbols = policy.allowedSpecialSymbols

@@ -36,7 +36,7 @@ from uuid import uuid4
 
 from pygcrypt.ciphers import Cipher
 
-from . import headers, errors
+from . import errors, headers
 from .records import Record
 
 
@@ -512,7 +512,7 @@ class PWSafe3(object):
     def __del__(self):
         try:
             self.fl.close()
-        except:
+        except Exception:
             pass
 
     def listall(self):
@@ -813,7 +813,7 @@ class PWSafe3(object):
                 (lusername, lhostname, lpid) = found[0]
                 if lhostname == socket.gethostbyname():
                     try:  # Check if the other proc is still alive
-                        os.kill(pid, 0)  # @UndefinedVariable
+                        os.kill(lpid, 0)
                         log.info(
                             "Other process (PID: %r) is alive. Can't override lock for %r ",
                             lpid,
@@ -822,7 +822,7 @@ class PWSafe3(object):
                         raise errors.AlreadyLockedError(
                             "Other process is alive. Can't override lock. "
                         )
-                    except:
+                    except Exception:
                         # Not really locked, remove stale lock
                         log.warning("Removing stale lock file of %r at %r", self, lfile)
                         os.remove(lfile)
@@ -853,7 +853,7 @@ class PWSafe3(object):
             fd = os.open(lfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
             os.write(fd, self._get_lock_data())
             os.close(fd)
-        except OSError as e:
+        except OSError:
             log.info("%r reported as unlocked but can't create the lockfile", self)
             raise errors.AlreadyLockedError
 

@@ -255,7 +255,7 @@ class Record(object):
                     saved=datetime.datetime(*tm[:6]),
                 )
             )
-        ret.sort(lambda a, b: cmp(a["saved"], b["saved"]))
+        ret.sort(key=lambda a: a["saved"])
         return ret
 
     def _find_hist(self):
@@ -436,7 +436,7 @@ class RecordProp(object, metaclass=_RecordPropType):
             self.rTYPE = ptype
         self.len = plen
         self.raw_data = pdata
-        self.data = pdata[5 : (plen + 5)]
+        self.data = pdata[5:(plen + 5)]
         psafe_logger.debug(
             "Created psafe record prop with rTYPE of %s. Class %s",
             repr(self.rTYPE),
@@ -1944,7 +1944,7 @@ def Create_Prop(fetchblock_f):
     if rTYPE in RecordPropTypes:
         try:
             return RecordPropTypes[rTYPE](rTYPE, rlen, data)
-        except:
+        except Exception:
             psafe_logger.exception("Failed to create record prop")
             return RecordProp(rTYPE, rlen, data)
     else:
