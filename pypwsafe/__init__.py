@@ -36,8 +36,8 @@ from uuid import uuid4
 from Crypto.Hash import SHA256
 from pygcrypt.ciphers import Cipher
 
-from . import PWSafeV3Headers, PWSafeV3Records, errors
-from .PWSafeV3Records import Record
+from . import headers, errors
+from .records import Record
 
 
 log = logging.getLogger("psafe.lib.init")
@@ -241,7 +241,7 @@ class PWSafe3(object):
             self.hmacreq = []
             self.records = []
             # Add EOF headers
-            self.headers.append(PWSafeV3Headers.EOFHeader())
+            self.headers.append(headers.EOFHeader())
             self.autoUpdateHeaders()
 
     def autoUpdateHeaders(self):
@@ -391,12 +391,12 @@ class PWSafe3(object):
         self.headers = []
         self.hmacreq = []
         self.remaining_headers = self.fulldata
-        hdr = PWSafeV3Headers.Create_Header(self._fetch_block)
+        hdr = headers.Create_Header(self._fetch_block)
         self.headers.append(hdr)
         self.hmacreq.append(hdr.hmac_data)
         # print str(hdr) +" - -"+ repr(hdr)
-        while type(hdr) != PWSafeV3Headers.EOFHeader:
-            hdr = PWSafeV3Headers.Create_Header(self._fetch_block)
+        while type(hdr) != headers.EOFHeader:
+            hdr = headers.Create_Header(self._fetch_block)
             self.headers.append(hdr)
             # print str(hdr) +" - -"+ repr(hdr)
 
@@ -567,7 +567,7 @@ class PWSafe3(object):
 
     def getUUID(self):
         """Return the safe's uuid"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.UUIDHeader)
+        return _getHeaderField(self.headers, headers.UUIDHeader)
 
     def setUUID(self, uuid=None, updateAutoData=True):
         if updateAutoData:
@@ -576,27 +576,27 @@ class PWSafe3(object):
         if uuid is None:
             uuid = uuid4()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.UUIDHeader, uuid):
-            self.headers.insert(0, PWSafeV3Headers.UUIDHeader(uuid=uuid))
+        if not _setHeaderField(self.headers, headers.UUIDHeader, uuid):
+            self.headers.insert(0, headers.UUIDHeader(uuid=uuid))
 
     def removeUUID(self):
-        _setHeaderField(self.headers, PWSafeV3Headers.UUIDHeader, None)
+        _setHeaderField(self.headers, headers.UUIDHeader, None)
 
     def getVersion(self):
         """Return the safe's version"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.VersionHeader, "version")
+        return _getHeaderField(self.headers, headers.VersionHeader, "version")
 
     def setVersion(self, version=None, updateAutoData=True):
         """Return the safe's version"""
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.VersionHeader, version):
-            self.headers.insert(0, PWSafeV3Headers.VersionHeader(version=version))
+        if not _setHeaderField(self.headers, headers.VersionHeader, version):
+            self.headers.insert(0, headers.VersionHeader(version=version))
 
     def getVersionPretty(self):
         """Return the safe's version"""
-        hdr = _findHeader(self.headers, PWSafeV3Headers.VersionHeader)
+        hdr = _findHeader(self.headers, headers.VersionHeader)
         if hdr:
             return hdr.getVersionHuman()
         return None
@@ -606,37 +606,37 @@ class PWSafe3(object):
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        hdr = _findHeader(self.headers, PWSafeV3Headers.VersionHeader)
+        hdr = _findHeader(self.headers, headers.VersionHeader)
         if hdr:
             hdr.setVersionHuman(version)
         else:
-            n = PWSafeV3Headers.VersionHeader(version=0x00)
+            n = headers.VersionHeader(version=0x00)
             n.setVersionHuman(version=version)
             self.headers.insert(0, n)
 
     def getTimeStampOfLastSave(self):
-        return _getHeaderField(self.headers, PWSafeV3Headers.TimeStampOfLastSaveHeader, "lastsave")
+        return _getHeaderField(self.headers, headers.TimeStampOfLastSaveHeader, "lastsave")
 
     def setTimeStampOfLastSave(self, timestamp, updateAutoData=True):
         if updateAutoData:
             self.autoUpdateHeaders()
 
         if not _setHeaderField(
-            self.headers, PWSafeV3Headers.TimeStampOfLastSaveHeader, timestamp.timetuple()
+            self.headers, headers.TimeStampOfLastSaveHeader, timestamp.timetuple()
         ):
             self.headers.insert(
-                0, PWSafeV3Headers.TimeStampOfLastSaveHeader(lastsave=timestamp.timetuple())
+                0, headers.TimeStampOfLastSaveHeader(lastsave=timestamp.timetuple())
             )
 
     def getLastSaveApp(self):
-        return _getHeaderField(self.headers, PWSafeV3Headers.LastSaveAppHeader, "lastSafeApp")
+        return _getHeaderField(self.headers, headers.LastSaveAppHeader, "lastSafeApp")
 
     def setLastSaveApp(self, app, updateAutoData=True):
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.LastSaveAppHeader, app):
-            self.headers.insert(0, PWSafeV3Headers.LastSaveAppHeader(lastSaveApp=app))
+        if not _setHeaderField(self.headers, headers.LastSaveAppHeader, app):
+            self.headers.insert(0, headers.LastSaveAppHeader(lastSaveApp=app))
 
     def getLastSaveUser(self, fallbackOld=True):
         ret = self.getLastSaveUserNew()
@@ -646,11 +646,11 @@ class PWSafe3(object):
 
     def getLastSaveUserNew(self):
         """Get the last saving user using only the non-deprecated field"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.LastSaveUserHeader, "username")
+        return _getHeaderField(self.headers, headers.LastSaveUserHeader, "username")
 
     def getLastSaveUserOld(self):
         """Get the last saving user using only the deprecated 0x05 field"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.WhoLastSavedHeader)
+        return _getHeaderField(self.headers, headers.WhoLastSavedHeader)
 
     def setLastSaveUser(self, username=None, updateAutoData=True, addOld=False):
         if updateAutoData:
@@ -658,13 +658,13 @@ class PWSafe3(object):
         if username is None:
             username = getpass.getuser()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.LastSaveUserHeader, username):
-            self.headers.insert(0, PWSafeV3Headers.LastSaveUserHeader(username=username))
-        if addOld and not _setHeaderField(self.headers, PWSafeV3Headers.WhoLastSavedHeader, username):
-            self.headers.insert(0, PWSafeV3Headers.WhoLastSavedHeader(username=username))
+        if not _setHeaderField(self.headers, headers.LastSaveUserHeader, username):
+            self.headers.insert(0, headers.LastSaveUserHeader(username=username))
+        if addOld and not _setHeaderField(self.headers, headers.WhoLastSavedHeader, username):
+            self.headers.insert(0, headers.WhoLastSavedHeader(username=username))
 
     def getLastSaveHost(self):
-        return _getHeaderField(self.headers, PWSafeV3Headers.LastSaveHostHeader, "hostname")
+        return _getHeaderField(self.headers, headers.LastSaveHostHeader, "hostname")
 
     def setLastSaveHost(self, hostname=None, updateAutoData=True):
         if updateAutoData:
@@ -672,36 +672,36 @@ class PWSafe3(object):
         if not hostname:
             hostname = socket.gethostname()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.LastSaveHostHeader, hostname):
-            self.headers.insert(0, PWSafeV3Headers.LastSaveHostHeader(hostname=hostname))
+        if not _setHeaderField(self.headers, headers.LastSaveHostHeader, hostname):
+            self.headers.insert(0, headers.LastSaveHostHeader(hostname=hostname))
 
     def getDbName(self):
         """Returns the name of the db according to the psafe headers"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.DBNameHeader, "dbName")
+        return _getHeaderField(self.headers, headers.DBNameHeader, "dbName")
 
     def setDbName(self, dbName, updateAutoData=True):
         """Returns the name of the db according to the psafe headers"""
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.DBNameHeader, dbName):
-            self.headers.insert(0, PWSafeV3Headers.DBNameHeader(dbName=dbName))
+        if not _setHeaderField(self.headers, headers.DBNameHeader, dbName):
+            self.headers.insert(0, headers.DBNameHeader(dbName=dbName))
 
     def getDbDesc(self):
         """Returns the description of the db according to the psafe headers"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.DBDescHeader, "dbDesc")
+        return _getHeaderField(self.headers, headers.DBDescHeader, "dbDesc")
 
     def setDbDesc(self, dbDesc, updateAutoData=True):
         """Returns the description of the db according to the psafe headers"""
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.DBDescHeader, dbDesc):
-            self.headers.insert(0, PWSafeV3Headers.DBDescHeader(dbDesc=dbDesc))
+        if not _setHeaderField(self.headers, headers.DBDescHeader, dbDesc):
+            self.headers.insert(0, headers.DBDescHeader(dbDesc=dbDesc))
 
     def getDbPolicies(self):
         """Return a list of all named password policies"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.NamedPasswordPoliciesHeader)
+        return _getHeaderField(self.headers, headers.NamedPasswordPoliciesHeader)
 
     def setDbPolicies(self, dbName, updateAutoData=True):
         """Returns the name of the db according to the psafe headers"""
@@ -709,7 +709,7 @@ class PWSafe3(object):
 
     def getDbRecentEntries(self):
         """Return a list of recent headers"""
-        return _getHeaderFields(self.headers, PWSafeV3Headers.RecentEntriesHeader)
+        return _getHeaderFields(self.headers, headers.RecentEntriesHeader)
 
     def setDbRecentEntries(self, entryUUID, updateAutoData=True):
         """Returns the name of the db according to the psafe headers"""
@@ -717,31 +717,31 @@ class PWSafe3(object):
 
     def getDbPrefs(self):
         """Return a list of recent headers"""
-        return _getHeaderField(self.headers, PWSafeV3Headers.NonDefaultPrefsHeader)
+        return _getHeaderField(self.headers, headers.NonDefaultPrefsHeader)
 
     def setDbPrefs(self, prefs, updateAutoData=True):
         """Returns the name of the db according to the psafe headers"""
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        if not _setHeaderField(self.headers, PWSafeV3Headers.NonDefaultPrefsHeader, prefs):
-            self.headers.insert(0, PWSafeV3Headers.NonDefaultPrefsHeader(**prefs))
+        if not _setHeaderField(self.headers, headers.NonDefaultPrefsHeader, prefs):
+            self.headers.insert(0, headers.NonDefaultPrefsHeader(**prefs))
 
     def setDbPref(self, prefName, prefValue, updateAutoData=True):
         """Returns the name of the db according to the psafe headers"""
         if updateAutoData:
             self.autoUpdateHeaders()
 
-        hdr = _findHeader(self.headers, PWSafeV3Headers.NonDefaultPrefsHeader)
+        hdr = _findHeader(self.headers, headers.NonDefaultPrefsHeader)
         if hdr:
-            attr = getattr(hdr, PWSafeV3Headers.NonDefaultPrefsHeader.FIELD)
+            attr = getattr(hdr, headers.NonDefaultPrefsHeader.FIELD)
             attr[prefName] = prefValue
         else:
-            self.headers.insert(0, PWSafeV3Headers.NonDefaultPrefsHeader(prefName=prefValue))
+            self.headers.insert(0, headers.NonDefaultPrefsHeader(prefName=prefValue))
 
     def getEmptyGroups(self):
         """Return a list of empty group names"""
-        return _getHeaderFields(self.headers, PWSafeV3Headers.EmptyGroupHeader)
+        return _getHeaderFields(self.headers, headers.EmptyGroupHeader)
 
     def setEmptyGroups(self, groups, updateAutoData=True):
         """Removes all existing empty group headers and adds one as given by groups"""
@@ -749,11 +749,11 @@ class PWSafe3(object):
             self.autoUpdateHeaders()
 
         for hdr in self.headers:
-            if type(hdr) == PWSafeV3Headers.EmptyGroupHeader:
+            if type(hdr) == headers.EmptyGroupHeader:
                 self.headers.remove(hdr)
 
         for groupName in groups:
-            self.headers.insert(0, PWSafeV3Headers.EmptyGroupHeader(groupName=groupName))
+            self.headers.insert(0, headers.EmptyGroupHeader(groupName=groupName))
 
     def addEmptyGroup(self, groupName, updateAutoData=True):
         """Removes all existing empty group headers and adds one as given by groups"""
@@ -762,7 +762,7 @@ class PWSafe3(object):
 
         assert groupName not in self.getEmptyGroups()
 
-        self.headers.insert(0, PWSafeV3Headers.EmptyGroupHeader(groupName=groupName))
+        self.headers.insert(0, headers.EmptyGroupHeader(groupName=groupName))
 
     def _get_lock_data(self):
         """Get a string representing the data that should be stored in the lockfile.

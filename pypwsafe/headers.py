@@ -33,7 +33,7 @@ from struct import pack, unpack
 from uuid import UUID, uuid4
 
 from . import consts, errors
-from .PWSafeV3Records import makedatetime
+from .records import makedatetime
 
 
 # logging.config.fileConfig('/etc/mss/psafe_log.conf')
