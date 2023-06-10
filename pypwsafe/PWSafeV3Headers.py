@@ -220,7 +220,7 @@ class UUIDHeader(Header):
         return "UUID=%s" % repr(self.uuid)
 
     def serial(self):
-        return pack("=16s", str(self.uuid.bytes))
+        return pack("=16s", self.uuid.bytes)
 
 
 class NonDefaultPrefsHeader(Header):
@@ -250,14 +250,14 @@ class NonDefaultPrefsHeader(Header):
     def parse(self):
         """Parse data."""
         self.opts = {}
-        remander = self.data.split(" ")
+        remander = self.data.split(b" ")
         while len(remander) > 2:
             # Pull out the data
-            rtype = str(remander[0])
+            rtype = remander[0]
             key = int(remander[1])
-            value = str(remander[2])
+            value = remander[2]
             del remander[0:3]
-            if rtype == "B":
+            if rtype == b"B":
                 found = False
                 for name, info in list(consts.conf_bools.items()):
                     if info["index"] == key:
@@ -267,15 +267,15 @@ class NonDefaultPrefsHeader(Header):
                     raise errors.ConfigItemNotFoundError(
                         "%d is not a valid configuration item" % key
                     )
-                if value == "0":
+                if value == b"0":
                     self.opts[name] = False
-                elif value == "1":
+                elif value == b"1":
                     self.opts[name] = True
                 else:
                     raise errors.PrefsValueError(
                         "Expected either 0 or 1 for bool type, got %r" % value
                     )
-            elif rtype == "I":
+            elif rtype == b"I":
                 found = False
                 for name, info in list(consts.conf_ints.items()):
                     if info["index"] == key:
@@ -294,7 +294,7 @@ class NonDefaultPrefsHeader(Header):
                 if info["max"] != -1 and info["max"] < value:
                     raise errors.PrefsDataTypeError("%r is too big" % value)
                 self.opts[name] = value
-            elif rtype == "S":
+            elif rtype == b"S":
                 found = False
                 for name, info in list(consts.conf_strs.items()):
                     if info["index"] == key:
@@ -652,7 +652,7 @@ class NamedPasswordPolicy(dict):
         if attr in self:
             return self[attr]
         else:
-            return dict.__getattribute__(self, attr=attr)
+            return dict.__getattribute__(self, attr)
 
     def __setattr__(self, attr, value):
         if attr in self:

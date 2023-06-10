@@ -119,12 +119,15 @@ class Record(object):
     def hmac_data(self):
         """Returns the data required for the "broken" hmac in psafe3."""
         # ! See bug 1812081.
-        ret = ""
+        ret = b""
         for i in self.records:
             # the data field has the data minus the padding
             # if i.serial()!=i.data:
             #    psafe_logger.warn('Serial != data for class %s. s: %s d: %s'%(repr(i.__class__),repr(i.serial()),repr(i.data)))
-            ret += i.serial()
+            s = i.serial()
+            if isinstance(s, str):
+                s = s.encode("us-ascii")
+            ret += s
         return ret
 
     def serialiaze(self):
@@ -551,7 +554,7 @@ class UUIDRecordProp(RecordProp):
 
     def serial(self):
         # psafe_logger.debug("Serial to %s",repr(pack('=16s',str(self.uuid.bytes))))
-        return pack("=16s", str(self.uuid.bytes))
+        return pack("=16s", self.uuid.bytes)
 
 
 class GroupRecordProp(RecordProp):

@@ -34,7 +34,7 @@ from struct import pack, unpack
 from uuid import uuid4
 
 from Crypto.Hash import SHA256
-from mcrypt import MCRYPT  # @UnresolvedImport
+from pygcrypt.ciphers import Cipher
 
 from . import PWSafeV3Headers, PWSafeV3Records, errors
 
@@ -210,7 +210,7 @@ class PWSafe3(object):
             try:
                 self.flfull = self.fl.read()
                 log.debug("Full data len: %d" % len(self.flfull))
-                self.password = str(password)
+                self.password = str(password).encode("utf-8")
                 # Read in file
                 self.load()
             finally:
@@ -311,15 +311,17 @@ class PWSafe3(object):
 
     def _regen_b1b2(self):
         """Regenerate b1 and b2. This is the encrypted form of K."""
-        tw = MCRYPT("twofish", "ecb")
-        tw.init(self.pprime)
+        tw = Cipher(b"TWOFISH", "ECB")
+        # HTU tw.init(self.pprime)
+        tw.key = self.pprime
         self.b1b2 = tw.encrypt(self.enckey)
         log.debug("B1/B2 set to %s" % repr(self.b1b2))
 
     def _regen_b3b4(self):
         """Regenerate b3 and b4. This is the encrypted form of L."""
-        tw = MCRYPT("twofish", "ecb")
-        tw.init(self.pprime)
+        tw = Cipher(b"TWOFISH", "ECB")
+        # HTU tw.init(self.pprime)
+        tw.key = self.pprime
         self.b3b4 = tw.encrypt(self.hshkey)
         log.debug("B3/B4 set to %s" % repr(self.b3b4))
 
@@ -424,12 +426,12 @@ class PWSafe3(object):
 
         Raises EOFError when there is no more data.
         """
-        assert num_blocks > 0
-        bytes = num_blocks * 16
-        if bytes > len(self.remaining_headers):
+        num_blocks = int(num_blocks)
+        num_bytes = num_blocks * 16
+        if num_bytes > len(self.remaining_headers):
             raise EOFError("No more header data")
-        ret = self.remaining_headers[:bytes]
-        self.remaining_headers = self.remaining_headers[bytes:]
+        ret = self.remaining_headers[:num_bytes]
+        self.remaining_headers = self.remaining_headers[num_bytes:]
         return ret
 
     def calc_keys(self):
@@ -437,8 +439,9 @@ class PWSafe3(object):
 
         Is based on pprime, b1b2, b3b4.
         """
-        tw = MCRYPT("twofish", "ecb")
-        tw.init(self.pprime)
+        tw = Cipher(b"TWOFISH", "ECB")
+        # HTU tw.init(self.pprime)
+        tw.key = self.pprime
         self.enckey = tw.decrypt(self.b1b2)
         # its ok to reuse; ecb doesn't keep state info
         self.hshkey = tw.decrypt(self.b3b4)
@@ -448,21 +451,25 @@ class PWSafe3(object):
     def decrypt_data(self):
         """Decrypt encrypted portion of header and data."""
         log.debug("Creating mcrypt object")
-        tw = MCRYPT("twofish", "cbc")
+        tw = Cipher(b"TWOFISH", "CBC")
         log.debug("Adding key & iv")
-        tw.init(self.enckey, self.iv)
+        # HTU tw.init(self.enckey, self.iv)
+        tw.key = self.enckey
+        tw.iv = self.iv
         log.debug("Decrypting data")
         self.fulldata = tw.decrypt(self.cryptdata)
 
     def encrypt_data(self):
         """Encrypted fulldata to cryptdata."""
-        tw = MCRYPT("twofish", "cbc")
-        tw.init(self.enckey, self.iv)
+        tw = Cipher(b"TWOFISH", "CBC")
+        # HTU tw.init(self.enckey, self.iv)
+        tw.key = self.enckey.encode("us-ascii")
+        tw.iv = self.iv.encode("us-ascii")
         self.cryptdata = tw.encrypt(self.fulldata)
 
     def current_hmac(self, cached=False):
         """Returns the current hmac of self.fulldata."""
-        data = ""
+        data = b""
         for i in self.headers:
             log.debug(
                 "Adding hmac data %r from %r" % (i.hmac_data(), i.__class__.__name__)
@@ -470,7 +477,10 @@ class PWSafe3(object):
             if cached:
                 data += i.data
             else:
-                data += i.hmac_data()
+                d = i.hmac_data()
+                if isinstance(d, str):
+                    d = d.encode("us-ascii")
+                data += d
                 # assert i.data == i.hmac_data(), "Working on %r where %r!=%r" % (i, i.data, i.hmac_data())
         for i in self.records:
             # TODO: Add caching support
