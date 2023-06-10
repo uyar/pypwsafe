@@ -66,11 +66,11 @@ class EmptyGroupTest_RecordLevel(TestSafeTestBase):
 
     def test_hasEmptyGroups(self):
         self.assertTrue(
-            "asdf" in self.testSafeO.getEmptyGroups(),
+            b"asdf" in self.testSafeO.getEmptyGroups(),
             "Expected an empty group named 'asdf'",
         )
         self.assertTrue(
-            "fdas" in self.testSafeO.getEmptyGroups(),
+            b"fdas" in self.testSafeO.getEmptyGroups(),
             "Expected an empty group named 'fdas'",
         )
 
