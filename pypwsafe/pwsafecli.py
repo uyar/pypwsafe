@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# ===============================================================================
+# =============================================================================
 # This file is part of PyPWSafe.
 #
 # PyPWSafe is free software: you can redistribute it and/or modify
@@ -13,17 +12,16 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with PyPWSafe. If not, see http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
-# ===============================================================================
+# along with PyPWSafe.  If not, see <http://www.gnu.org/licenses/>.
+# =============================================================================
 
 import datetime
 import logging
 import logging.config
-import string
 import sys
 import time
 from getpass import getpass
-from optparse import OptionGroup, OptionParser, make_option
+from optparse import OptionParser, make_option
 from socket import getfqdn
 from uuid import UUID
 
@@ -102,7 +100,7 @@ def new_safe(
 
     try:
         safe.setLastSaveHost(getfqdn())
-    except:
+    except Exception:
         pass
 
     if dbname:
@@ -302,8 +300,8 @@ def init_validator(options):
     pass
 
 
-def init_action(options):  # pragma: no cover
-    safe = new_safe(
+def init_action(options):
+    safe = new_safe(  # noqa
         options.filename,
         options.safe_password,
         options.username,
@@ -329,7 +327,7 @@ def update_action(options):  # pragma: no cover
             raise PWSafeCLIError("No records matching %s found" % record_options)
         elif count > 1:
             raise NotImplementedError("implement multiple record choice")
-        add_or_update_records(safe, records[0], options)
+        add_or_update_record(safe, records[0], options)
 
 
 usage_message = """
