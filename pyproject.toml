@@ -52,6 +52,9 @@ dev = [
 [project.urls]
 repository = "https://github.com/uyar/pypwsafe"
 
+[project.scripts]
+pwsafecli = "pypwsafe:pwsafecli.main"
+
 [tool.setuptools]
 packages = ["pypwsafe"]
 

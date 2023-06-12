@@ -1,4 +1,7 @@
 # =============================================================================
+# Copyright (C) 2023 H. Turgut Uyar <uyar@tekir.org>
+#   original author: Paulson McIntyre <paul@gpmidi.net>
+#
 # This file is part of PyPWSafe.
 #
 # PyPWSafe is free software: you can redistribute it and/or modify
@@ -20,23 +23,24 @@ import logging
 import logging.config
 import sys
 import time
+from argparse import ArgumentParser
 from getpass import getpass
-from optparse import OptionParser, make_option
 from socket import getfqdn
 from uuid import UUID
 
+from pypwsafe import PWSafe3, Record
+from pypwsafe.errors import PasswordError
 
-# simplify the naming
-Record = None
-PWSafe3 = None
+
+__version__ = "0.1"
 
 
 class PWSafeCLIError(Exception):
-    pass
+    """Errors related to the PWSafe CLI operations."""
 
 
 class PWSafeCLIValidationError(Exception):
-    pass
+    """Errors related to PWSafe CLI usage arguments."""
 
 
 VALID_ATTRIBUTES = [
@@ -80,13 +84,11 @@ def match_valid(record, **params):
     return valid
 
 
-def get_matching_records(psafe, **params):  # pragma: no cover
+def get_matching_records(psafe, **params):
     return [r for r in psafe.records if match_valid(r, **params)]
 
 
-def new_safe(
-    filename, password, username=None, dbname=None, dbdesc=None
-):  # pragma: no cover
+def new_safe(filename, password, username=None, dbname=None, dbdesc=None):
     safe = PWSafe3(filename=filename, password=password, mode="RW")
 
     # Set details
@@ -110,11 +112,12 @@ def new_safe(
 
     safe.save()
 
-    return safe
 
+def add_or_update_record(psafe, record, options):
+    """Adds an entry to the given psafe, Update if it already exists.
 
-def add_or_update_record(psafe, record, options):  # pragma: no cover
-    """Adds an entry to the given psafe. Update if it already exists. Reloads the psafe data once complete."""
+    Reloads the psafe data once complete.
+    """
     now = datetime.datetime.now()
 
     if record is None:
@@ -165,7 +168,7 @@ def collect_record_options(options):
     return collected
 
 
-def show_records(records, attributes):  # pragma: no cover
+def show_records(records, attributes):
     if not attributes:
         # show all attributes
         attributes = VALID_ATTRIBUTES
@@ -180,18 +183,16 @@ def show_records(records, attributes):  # pragma: no cover
         print("]")
 
 
-def get_safe(filename, password):  # pragma: no cover
+def get_safe(filename, password):
     safe = None
-
     try:
         safe = PWSafe3(filename=filename, password=password, mode="RW")
-    except pypwsafe.errors.PasswordError:
+    except PasswordError:
         raise PWSafeCLIError("Invalid password for safe")
-
     return safe
 
 
-class Locked(object):  # pragma: no cover
+class Locked:
     def __init__(self, lock):
         self.lock = lock
 
@@ -202,14 +203,35 @@ class Locked(object):  # pragma: no cover
         self.lock.unlock()
 
 
-def add_validator(options):
-    if options.title is None:
-        raise PWSafeCLIValidationError("--title must be specified")
-    if options.password is None:
-        raise PWSafeCLIValidationError("--password must be specified")
+def dump_action(options):
+    safe = get_safe(options.filename, options.safe_password)
+
+    with Locked(safe):
+        if not safe.records:
+            raise PWSafeCLIError("No records")
+
+        show_records(safe.records, options.display)
 
 
-def add_action(options):  # pragma: no cover
+def get_action(options):
+    record_options = collect_record_options(options)
+
+    safe = get_safe(options.filename, options.safe_password)
+
+    with Locked(safe):
+        records = get_matching_records(safe, **record_options)
+        if not records:
+            raise PWSafeCLIError("No records matching %s found" % record_options)
+
+        show_records(records, options.display)
+
+
+def init_action(options):
+    new_safe(options.filename, options.safe_password, options.username,
+             options.dbname, options.dbdesc)
+
+
+def add_action(options):
     safe = get_safe(options.filename, options.safe_password)
     with Locked(safe):
         result = add_or_update_record(safe, None, options)
@@ -217,12 +239,7 @@ def add_action(options):  # pragma: no cover
         print(result)
 
 
-def delete_validator(options):
-    if options.UUID is None:
-        raise PWSafeCLIValidationError("--uuid must be specified")
-
-
-def delete_action(options):  # pragma: no cover
+def delete_action(options):
     safe = get_safe(options.filename, options.safe_password)
 
     with Locked(safe):
@@ -237,85 +254,7 @@ def delete_action(options):  # pragma: no cover
         safe.save()
 
 
-def display_validator(option):
-    attrs = option.split(",")
-    try:
-        pos = attrs.index("uuid")
-        attrs[pos] = "UUID"
-    except ValueError:
-        pass
-
-    unsupported = [field for field in attrs if not is_valid_field_name(field)]
-    if unsupported:
-        raise PWSafeCLIValidationError("unsupport display fields: %s" % unsupported)
-
-
-def is_valid_field_name(field):
-    if field in VALID_ATTRIBUTES:
-        return True
-    return False
-
-
-def dump_validator(options):  # pragma: no cover
-    if options.display:
-        display_validator(options.display)
-
-
-def dump_action(options):  # pragma: no cover
-    safe = get_safe(options.filename, options.safe_password)
-
-    with Locked(safe):
-        if not safe.records:
-            raise PWSafeCLIError("No records")
-
-        show_records(safe.records, options.display)
-
-
-def get_validator(options):
-    if not any(
-        [getattr(options, attr) for attr in ("group", "title", "username", "UUID")]
-    ):
-        raise PWSafeCLIValidationError(
-            "one of --group, --title, --username or --uuid must be provided"
-        )
-
-    if options.display:
-        display_validator(options.display)
-
-
-def get_action(options):  # pragma: no cover
-    record_options = collect_record_options(options)
-
-    safe = get_safe(options.filename, options.safe_password)
-
-    with Locked(safe):
-        records = get_matching_records(safe, **record_options)
-        if not records:
-            raise PWSafeCLIError("No records matching %s found" % record_options)
-
-        show_records(records, options.display)
-
-
-def init_validator(options):
-    pass
-
-
-def init_action(options):
-    safe = new_safe(  # noqa
-        options.filename,
-        options.safe_password,
-        options.username,
-        options.dbname,
-        options.dbdesc,
-    )
-
-
-def update_validator(options):
-    if not options.UUID:
-        raise PWSafeCLIValidationError("must provide --uuid")
-
-
-def update_action(options):  # pragma: no cover
+def update_action(options):
     record_options = collect_record_options(options)
 
     safe = get_safe(options.filename, options.safe_password)
@@ -330,175 +269,103 @@ def update_action(options):  # pragma: no cover
         add_or_update_record(safe, records[0], options)
 
 
-usage_message = """
-Usage: psafecli [add|delete|get|init|update]
+def make_parser():
+    parser = ArgumentParser()
+    parser.add_argument("--version", action="version", version=__version__)
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--debug", action="store_true")
 
-Run help for a subcommand for more options.
-"""
+    parser.add_argument("-f", "--file", dest="filename", metavar="FILE", required=True,
+                        help="use FILE as PWSafe container")
 
+    common_record_parser = ArgumentParser(add_help=False)
+    common_record_parser.add_argument("--email", help="e-mail for contact person of record")
+    common_record_parser.add_argument("--group", type=lambda v: v.split("."), help="group of record")
+    common_record_parser.add_argument("--title", help="title of record")
+    common_record_parser.add_argument("--username", help="user of record")
+    common_record_parser.add_argument("--uuid", dest="UUID", type=UUID, help="UUID of record")
 
-def makeArgParser():
-    parsers = {}
+    record_parser = ArgumentParser(add_help=False)
+    record_parser.add_argument("--expires", type=lambda v: time.strptime(v, "%Y-%m-%d %H:%M"),
+                               help="date record expires; ex. 2014-07-03 15:30"),
+    record_parser.add_argument("--password", help="password of record (not the safe itself)"),
+    record_parser.add_argument("--url", help="URL for Record"),
 
-    base_options = [
-        make_option(
-            "-f",
-            "--file",
-            dest="filename",
-            help="use FILE as PWSafe container",
-            metavar="FILE",
-        ),
-        make_option("--verbose", action="store_true"),
-        make_option("--debug", action="store_true"),
-    ]
+    display_parser = ArgumentParser(add_help=False)
+    display_parser.add_argument("--display", action="append", required=False,
+                                choices=VALID_ATTRIBUTES,
+                                help="record attributes to display")
 
-    common_record_options = [
-        make_option("--email", help="E-mail for contact person of Record"),
-        make_option("--group", help="group of Record"),
-        make_option("--title", help="title of Record"),
-        make_option("--username", help="user of Record"),
-        make_option("--uuid", dest="UUID", help="UUID of Record"),
-    ]
+    subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
+    subparsers.required = True
 
-    record_options = [
-        make_option("--expires", help="Date Record expires ex. 2014-07-03 15:30"),
-        make_option("--password", help="password of Record (not the Safe itself)"),
-        make_option("--url", help="URL for Record"),
-    ]
+    parents = [display_parser]
+    sub = subparsers.add_parser("dump", parents=parents, help="dump data")
+    sub.set_defaults(action=dump_action)
 
-    display_option = make_option(
-        "--display",
-        help="comma separated list of record attributes to display from this list: %s"
-        % VALID_ATTRIBUTES,
-    )
+    parents = [common_record_parser, display_parser]
+    sub = subparsers.add_parser("get", parents=parents, help="get a record")
+    sub.set_defaults(action=get_action)
 
-    parser = OptionParser(option_list=base_options, usage="psafecli init [options]")
-    parser.add_option("--dbname", help="Name of new DB")
-    parser.add_option("--dbdesc", help="Description of new DB")
-    parser.add_option("--username", help="user of Safe")
-    parsers["init"] = parser
+    sub = subparsers.add_parser("init", help="initialize a safe")
+    sub.add_argument("--dbname", help="name of new db")
+    sub.add_argument("--dbdesc", help="description of new db")
+    sub.add_argument("--username", help="user of safe")
+    sub.set_defaults(action=init_action)
 
-    parser = OptionParser(
-        option_list=(base_options + [display_option]), usage="psafecli dump [options]"
-    )
-    parsers["dump"] = parser
+    parents = [common_record_parser, record_parser]
+    sub = subparsers.add_parser("add", parents=parents, help="add a record")
+    sub.set_defaults(action=add_action)
 
-    parser = OptionParser(
-        option_list=(base_options + common_record_options + [display_option]),
-        usage="psafecli get [options]",
-    )
-    parsers["get"] = parser
+    sub = subparsers.add_parser("delete", help="delete a record")
+    sub.add_argument("--uuid", dest="UUID", type=UUID, required=True,
+                     help="UUID of record")
+    sub.set_defaults(action=delete_action)
 
-    parser = OptionParser(
-        option_list=(base_options + common_record_options + record_options),
-        usage="psafecli add [options]",
-    )
-    parsers["add"] = parser
+    parents = [common_record_parser, record_parser]
+    sub = subparsers.add_parser("update", parents=parents, help="update a record")
+    sub.set_defaults(action=update_action)
 
-    parser = OptionParser(option_list=base_options, usage="psafecli delete [options]")
-    parser.add_option("--uuid", dest="UUID", help="UUID of Record")
-    parsers["delete"] = parser
-
-    parser = OptionParser(
-        option_list=(base_options + common_record_options + record_options),
-        usage="psafecli update [options]",
-    )
-    parsers["update"] = parser
-
-    return parsers
+    return parser
 
 
-def parse_commandline(parsers, argv):
-    if len(argv) == 1:
-        raise PWSafeCLIValidationError("must specify a command to run")
-    elif argv[1].startswith("-"):
-        raise PWSafeCLIValidationError(usage_message)
-
-    action = argv[1]
-
-    if action not in list(parsers.keys()):
-        raise PWSafeCLIValidationError("unknown action: %s" % action)
-
-    parser = parsers[action]
-
-    (options, args) = parser.parse_args(argv[2:])
-
-    options.action = action
-
-    if options.debug:
-        logger = logging.getLogger("psafe")
-        logger.setLevel(logging.DEBUG)
-
-    if options.filename is None:
-        parser.error("Must provide filename")
-
-    if parser.has_option("--group") and options.group:
-        options.group = options.group.split(".")
-
-    if parser.has_option("--uuid") and options.UUID:
-        options.UUID = UUID(options.UUID)
-
-    if parser.has_option("--expires") and options.expires:
-        try:
-            options.expires = time.strptime(options.expires, "%Y-%m-%d %H:%M")
-        except ValueError:
-            raise PWSafeCLIValidationError(
-                "date entered does not match %Y-%m-%d %H:%M format"
-            )
-
-    options.safe_password = None
-
-    return options
-
-
-def main(options):  # pragma: no cover
-    actions = {
-        "add": (add_validator, add_action),
-        "delete": (delete_validator, delete_action),
-        "dump": (dump_validator, dump_action),
-        "get": (get_validator, get_action),
-        "init": (init_validator, init_action),
-        "update": (update_validator, update_action),
-    }
-
-    validator, func = actions.get(options.action, None)
-    if not func:
-        raise PWSafeCLIValidationError("%s is not supported\n" % options.action)
-
-    if validator:
-        validator(options)
-
-    if not options.safe_password:
-        options.safe_password = getpass(
-            "Enter the password for PWSafe3 file: %s\n> " % options.filename
-        )
-
-    func(options)
-
-
-if __name__ == "__main__":  # pragma: no cover
-    logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)s %(levelname)s %(message)s",
-        stream=sys.stderr,
-    )
-    logger = logging.getLogger("psafe")
-    logger.setLevel(logging.WARNING)
-
-    import pypwsafe
-
-    Record = pypwsafe.Record
-    PWSafe3 = pypwsafe.PWSafe3
-
-    parsers = makeArgParser()
+def main():
+    parser = make_parser()
+    arguments = parser.parse_args()
 
     try:
-        options = parse_commandline(parsers, sys.argv)
+        if arguments.command == "get":
+            if not any(getattr(arguments, attr) for attr in ["group", "title", "username", "UUID"]):
+                raise PWSafeCLIValidationError("one of --group, --title, --username, --uuid must be specified")
 
-        main(options)
+        if arguments.command == "add":
+            if arguments.title is None:
+                raise PWSafeCLIValidationError("--title must be specified")
+            if arguments.password is None:
+                raise PWSafeCLIValidationError("--password must be specified")
+
+        if arguments.command == "update":
+            if arguments.UUID is None:
+                raise PWSafeCLIValidationError("--uuid must be specified")
     except PWSafeCLIValidationError as e:
-        sys.stderr.write("%s\n" % e)
+        parser.print_usage()
+        print(e, file=sys.stderr)
         sys.exit(1)
+
+    logging.basicConfig(format="%(asctime)s %(levelname)s %(message)s")
+    logger = logging.getLogger("psafe")
+    logger.setLevel(logging.DEBUG if arguments.debug else logging.INFO)
+
+    arguments.safe_password = None
+    if arguments.safe_password is None:
+        arguments.safe_password = getpass("Enter the password for PWSafe3 file: %s\n> " % arguments.filename)
+
+    try:
+        arguments.action(arguments)
     except PWSafeCLIError as e:
-        sys.stderr.write("%s\n" % e)
+        print(e, file=sys.stderr)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
