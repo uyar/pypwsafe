@@ -17,64 +17,24 @@
 
 # original author: Paulson McIntyre <paul@gpmidi.net>
 
-import unittest
-
-from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
+import pytest
 
 
-class VersionTest_DBLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "VersionTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = False
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def _openSafe(self):
-        from pypwsafe import PWSafe3
-
-        self.testSafeO = PWSafe3(
-            filename=self.ourTestSafe,
-            password=STANDARD_TEST_SAFE_PASSWORD,
-            mode=self.autoOpenMode,
-        )
-
-    def test_open(self):
-        self.testSafeO = None
-        self._openSafe()
-        self.assertTrue(self.testSafeO, "Failed to open the test safe")
+SAFE_FILENAME = "VersionTest.psafe3"
 
 
-class VersionTest_RecordLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "VersionTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = True
-    # How to open the safe
-    autoOpenMode = "RW"
-
-    def test_read(self):
-        self.assertTrue(
-            self.testSafeO.getVersion() is None, "Given safe shouldn't have a version"
-        )
-        # self.assertTrue(self.testSafeO.getVersionPretty(), "Couldn't get the pretty version")
-
-    def test_pretty_write(self):
-        self.testSafeO.setVersionPretty(version="PasswordSafe V3.28")
-        self.testSafeO.save()
-        self.assertTrue(
-            self.testSafeO.getVersion() == 0x030A,
-            "Pretty version set resulted in the wrong version ID",
-        )
-
-    def test_bad_pretty_value(self):
-        self.assertRaises(
-            ValueError, self.testSafeO.setVersionPretty, version="Bogus version"
-        )
+def test_safe_should_not_have_a_version(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    assert safe.getVersion() is None
 
 
-# FIXME: Add save test
+def test_set_pretty_version_should_set_correct_id(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    safe.setVersionPretty(version="PasswordSafe V3.28")
+    assert safe.getVersion() == 0x030A
+
+
+def test_set_pretty_version_should_raise_error_with_bogus_version(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    with pytest.raises(ValueError):
+        safe.setVersionPretty(version="Bogus version")

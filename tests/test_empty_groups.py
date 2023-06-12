@@ -17,63 +17,16 @@
 
 # original author: Paulson McIntyre <paul@gpmidi.net>
 
-import unittest
 
-from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
-
-
-class EmptyGroupTest_DBLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "EmptyGroupTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = False
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def _openSafe(self):
-        from pypwsafe import PWSafe3
-
-        self.testSafeO = PWSafe3(
-            filename=self.ourTestSafe,
-            password=STANDARD_TEST_SAFE_PASSWORD,
-            mode=self.autoOpenMode,
-        )
-
-    def test_open(self):
-        self.testSafeO = None
-        self._openSafe()
-        self.assertTrue(self.testSafeO, "Failed to open the test safe")
+SAFE_FILENAME = "EmptyGroupTest.psafe3"
 
 
-class EmptyGroupTest_RecordLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "EmptyGroupTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = True
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def test_hasEmptyGroups(self):
-        self.assertTrue(
-            b"asdf" in self.testSafeO.getEmptyGroups(),
-            "Expected an empty group named 'asdf'",
-        )
-        self.assertTrue(
-            b"fdas" in self.testSafeO.getEmptyGroups(),
-            "Expected an empty group named 'fdas'",
-        )
-
-    def test_addEmptyGroup(self):
-        newgrp = "bogus5324"
-        self.testSafeO.addEmptyGroup(newgrp, updateAutoData=False)
-        self.assertTrue(
-            newgrp in self.testSafeO.getEmptyGroups(),
-            "Expected an empty group named %r" % newgrp,
-        )
+def test_safe_should_have_multiple_empty_groups(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    assert safe.getEmptyGroups() == [b"asdf", b"fdas"]
 
 
-# FIXME: Add save test
+def test_add_empty_group_should_add_empty_group(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    safe.addEmptyGroup("bogus5324")
+    assert "bogus5324" in safe.getEmptyGroups()

@@ -17,51 +17,13 @@
 
 # original author: Paulson McIntyre <paul@gpmidi.net>
 
-import unittest
-
-from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
+from uuid import UUID
 
 
-class RecentEntriesTest_DBLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "RecentEntriesTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = False
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def _openSafe(self):
-        from pypwsafe import PWSafe3
-
-        self.testSafeO = PWSafe3(
-            filename=self.ourTestSafe,
-            password=STANDARD_TEST_SAFE_PASSWORD,
-            mode=self.autoOpenMode,
-        )
-
-    def test_open(self):
-        self.testSafeO = None
-        self._openSafe()
-        self.assertTrue(self.testSafeO, "Failed to open the test safe")
+SAFE_FILENAME = "RecentEntriesTest.psafe3"
 
 
-class RecentEntriesTest_RecordLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "RecentEntriesTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = True
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def test_entries(self):
-        from uuid import UUID
-
-        for entry in self.testSafeO.getDbRecentEntries():
-            self.assertTrue(type(entry) == UUID, "Expected a UUID")
-
-
-# FIXME: Add save test
+def test_safe_entries_should_be_uuids(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    for entry in safe.getDbRecentEntries():
+        assert isinstance(entry, UUID)

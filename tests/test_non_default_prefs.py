@@ -17,68 +17,34 @@
 
 # original author: Paulson McIntyre <paul@gpmidi.net>
 
-import unittest
-
-from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
+from pypwsafe.consts import conf_bools, conf_ints, conf_strs, ptDatabase
 
 
-class NonDefaultPrefsTest_DBLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "NonDefaultPrefsTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = False
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def _openSafe(self):
-        from pypwsafe import PWSafe3
-
-        self.testSafeO = PWSafe3(
-            filename=self.ourTestSafe,
-            password=STANDARD_TEST_SAFE_PASSWORD,
-            mode=self.autoOpenMode,
-        )
-
-    def test_open(self):
-        self.testSafeO = None
-        self._openSafe()
-        self.assertTrue(self.testSafeO, "Failed to open the test safe")
+SAFE_FILENAME = "NonDefaultPrefsTest.psafe3"
 
 
-class NonDefaultPrefsTest_RecordLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above)
-    testSafe = "NonDefaultPrefsTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = True
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def test_defaults(self):
-        from pypwsafe.consts import conf_bools, conf_ints, conf_strs, \
-            ptDatabase
-
-        prefs = self.testSafeO.getDbPrefs()
-        self.assertTrue(len(prefs) > 0, "Expected some prefs to be set")
-
-        # print repr(prefs)
-
-        for typeS in [conf_bools, conf_ints, conf_strs]:
-            for name, info in list(typeS.items()):
-                if info["type"] == ptDatabase:
-                    self.assertTrue(
-                        name in prefs, "Didn't find %r in %r" % (name, prefs)
-                    )
-                else:
-                    self.assertFalse(
-                        name in prefs,
-                        "Found %r of type %r in %r when it's not a DB level setting"
-                        % (name, info["type"], prefs),
-                    )
+def test_safe_should_have_some_settings(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    prefs = safe.getDbPrefs()
+    assert len(prefs) == 30
 
 
-# FIXME: Add a check to make sure default values aren't being saved
-# FIXME: Add save test
+def test_db_level_settings_should_be_in_stored(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    prefs = safe.getDbPrefs()
+    for pref_types in [conf_bools, conf_ints, conf_strs]:
+        for name, info in pref_types.items():
+            if info["type"] == ptDatabase:
+                assert name in prefs
+
+
+def test_non_db_level_settings_should_not_be_stored(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    prefs = safe.getDbPrefs()
+    for pref_types in [conf_bools, conf_ints, conf_strs]:
+        for name, info in pref_types.items():
+            if info["type"] != ptDatabase:
+                assert name not in prefs
+
+
+# TODO: Add a check to make sure default values aren't being saved

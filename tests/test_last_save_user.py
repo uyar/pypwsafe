@@ -17,82 +17,36 @@
 
 # original author: Paulson McIntyre <paul@gpmidi.net>
 
-import unittest
 
-from TestSafeTests import STANDARD_TEST_SAFE_PASSWORD, TestSafeTestBase
-
-
-class LastSaveUserTest_DBLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "LastSaveUserTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = False
-    # How to open the safe
-    autoOpenMode = "RO"
-
-    def _openSafe(self):
-        from pypwsafe import PWSafe3
-
-        self.testSafeO = PWSafe3(
-            filename=self.ourTestSafe,
-            password=STANDARD_TEST_SAFE_PASSWORD,
-            mode=self.autoOpenMode,
-        )
-
-    def test_open(self):
-        self.testSafeO = None
-        self._openSafe()
-        self.assertTrue(self.testSafeO, "Failed to open the test safe")
+SAFE_FILENAME = "LastSaveUserTest.psafe3"
 
 
-class LastSaveUserTest_RecordLevel(TestSafeTestBase):
-    # Should be overridden with a test safe file name.
-    # The path should be relative to the test_safes directory.
-    # All test safes must have the standard password (see above).
-    testSafe = "LastSaveUserTest.psafe3"
-    # Automatically open safes
-    autoOpenSafe = True
-    # How to open the safe
-    autoOpenMode = "RW"
-
-    def test_write(self):
-        found = self.testSafeO.getLastSaveUserNew()
-        self.assertTrue(found, "Didn't find a new username")
-
-        username = "user123"
-        self.testSafeO.setLastSaveUser(
-            username=username,
-            updateAutoData=True,
-            addOld=True,
-        )
-        found = self.testSafeO.getLastSaveUserNew()
-        foundOld = self.testSafeO.getLastSaveUserOld()
-        self.assertTrue(found == username, "Saved new user doesn't match what we set")
-        self.assertTrue(
-            foundOld == username,
-            "Saved old user (%r) doesn't match what we set (%r)" % (foundOld, username),
-        )
-
-    def test_new(self):
-        found = self.testSafeO.getLastSaveUserNew()
-        self.assertTrue(found)
-
-    def test_old(self):
-        found = self.testSafeO.getLastSaveUserOld()
-        self.assertFalse(found, "Found an old username")
-
-    def test_base(self):
-        foundN = self.testSafeO.getLastSaveUserNew()
-        foundO = self.testSafeO.getLastSaveUserOld()
-
-        foundFB = self.testSafeO.getLastSaveUser(fallbackOld=True)
-
-        self.assertTrue(
-            foundN == foundFB or foundO == foundFB,
-            "User mismatch",
-        )
+def test_safe_should_have_new_last_save_user(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    user = safe.getLastSaveUserNew()
+    assert user == b"gpmidi"
 
 
-# FIXME: Add save test
+def test_safe_should_not_have_old_last_save_user(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    user = safe.getLastSaveUserOld()
+    assert user is None
+
+
+def test_last_user_fallback_should_match_new_or_old(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    new_user = safe.getLastSaveUserNew()
+    old_user = safe.getLastSaveUserOld()
+    user = safe.getLastSaveUser(fallbackOld=True)
+    assert (user == new_user) or (user == old_user)
+
+
+def test_last_user_set_should_save_given_user(test_safe):
+    safe = test_safe(SAFE_FILENAME, "RO")
+    last_user = safe.getLastSaveUserNew()
+    assert last_user == b"gpmidi"
+    safe.setLastSaveUser(username="user123", updateAutoData=True, addOld=True)
+    new_user = safe.getLastSaveUserNew()
+    old_user = safe.getLastSaveUserOld()
+    assert new_user == "user123"
+    assert old_user == "user123"
