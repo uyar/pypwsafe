@@ -340,6 +340,8 @@ class NonDefaultPrefsHeader(Header):
             if name not in consts.conf_types:
                 raise errors.PrefsValueError("%r is not a valid configuration option" % name)
             typ = consts.conf_types[name]
+            if (typ == str) and (type(value) == bytes):
+                value = value.decode("us-ascii")
             if type(value) != typ:
                 raise errors.PrefsDataTypeError(
                     "%r is not a valid type for the key %r" % (type(value), name)
@@ -707,7 +709,10 @@ class NamedPasswordPoliciesHeader(Header):
             count -= 1
             if count < 0:
                 log.warn("More record data than expected")
-            nameLen = int(unpack("=2s", left[:2])[0], 16)
+            try:
+                nameLen = int(unpack("=2s", left[:2])[0], 16)
+            except ValueError:
+                return
             left = left[2:]
             name = left[:nameLen]
             log.debug("Name len: %r Name: %r", nameLen, name)

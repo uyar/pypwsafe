@@ -588,7 +588,7 @@ class GroupRecordProp(RecordProp):
 
     def parse(self):
         self.group_str = self.data
-        self.group = self.group_str.split(".")
+        self.group = self.group_str.split(b".")
 
     def __repr__(self):
         return "Group" + RecordProp.__repr__(self)
@@ -603,7 +603,7 @@ class GroupRecordProp(RecordProp):
         self.group = value
 
     def serial(self):
-        self.group_str = ".".join(self.group)
+        self.group_str = b".".join(self.group)
         # psafe_logger.debug("Serial to %s Data %s"%(repr(self.group_str),repr(self.data)))
         return self.group_str
 

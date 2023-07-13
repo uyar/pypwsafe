@@ -776,7 +776,7 @@ class PWSafe3:
         return "%s@%s:%d" % (username, host, pid)
 
     # Example Lockfile data: 'myusername@myhostname:12345'
-    LOCKFILE_PARSE_RE = re.compile(r"^(.*)@([^@:]*):(\d+)$")
+    LOCKFILE_PARSE_RE = re.compile(rb"^(.*)@([^@:]*):(\d+)$")
 
     def lock(self):
         """Acquire a lock on the DB. Raise an exception on failure. Raises an error
@@ -851,7 +851,7 @@ class PWSafe3:
         # Should generate an OS error if the file already exists
         try:
             fd = os.open(lfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
-            os.write(fd, self._get_lock_data())
+            os.write(fd, self._get_lock_data().encode("us-ascii"))
             os.close(fd)
         except OSError:
             log.info("%r reported as unlocked but can't create the lockfile", self)

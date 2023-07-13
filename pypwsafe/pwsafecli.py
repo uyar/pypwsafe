@@ -18,14 +18,14 @@
 # along with PyPWSafe.  If not, see <http://www.gnu.org/licenses/>.
 # =============================================================================
 
-import datetime
 import logging
 import logging.config
 import sys
-import time
 from argparse import ArgumentParser
+from datetime import datetime
 from getpass import getpass
 from socket import getfqdn
+from time import strptime
 from uuid import UUID
 
 from pypwsafe import PWSafe3, Record
@@ -93,7 +93,7 @@ def new_safe(filename, password, username=None, dbname=None, dbdesc=None):
 
     # Set details
     safe.setVersion()
-    safe.setTimeStampOfLastSave(datetime.datetime.now())
+    safe.setTimeStampOfLastSave(datetime.now())
     safe.setUUID()
     safe.setLastSaveApp("psafecli")
 
@@ -118,7 +118,7 @@ def add_or_update_record(psafe, record, options):
 
     Reloads the psafe data once complete.
     """
-    now = datetime.datetime.now()
+    now = datetime.now()
 
     if record is None:
         record = Record()
@@ -286,7 +286,7 @@ def make_parser():
     common_record_parser.add_argument("--uuid", dest="UUID", type=UUID, help="UUID of record")
 
     record_parser = ArgumentParser(add_help=False)
-    record_parser.add_argument("--expires", type=lambda v: time.strptime(v, "%Y-%m-%d %H:%M"),
+    record_parser.add_argument("--expires", type=lambda v: strptime(v, "%Y-%m-%d %H:%M"),
                                help="date record expires; ex. 2014-07-03 15:30"),
     record_parser.add_argument("--password", help="password of record (not the safe itself)"),
     record_parser.add_argument("--url", help="URL for Record"),
